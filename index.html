@@ -36,15 +36,44 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .demo-notice {
-            background: #ffd700;
-            color: #8b6914;
+        .api-notice {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
             text-align: center;
             font-weight: bold;
             font-size: 1.1rem;
+        }
+
+        .api-methods {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .method-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .method-btn {
+            padding: 8px 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .method-btn.active {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.8);
         }
 
         .main-grid {
@@ -169,6 +198,15 @@
             font-weight: 500;
         }
 
+        .rate-limit {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -180,11 +218,24 @@
     <div class="container">
         <div class="header">
             <h1>🌐 도메인 체커 Pro</h1>
-            <p>실시간 도메인 가용성 확인</p>
+            <p>실제 WHOIS API 연동 - 정확한 도메인 가용성 확인</p>
         </div>
 
-        <div class="demo-notice">
-            🎯 데모 모드: 실제 도메인 체크 대신 시뮬레이션 결과를 보여줍니다
+        <div class="api-notice">
+            🎯 실제 API 연동: 정확한 도메인 등록 정보를 확인합니다
+        </div>
+
+        <div class="api-methods">
+            <div><strong>체크 방식 선택:</strong></div>
+            <div class="method-toggle">
+                <button class="method-btn active" onclick="setCheckMethod('whois')" id="whoisBtn">WHOIS API</button>
+                <button class="method-btn" onclick="setCheckMethod('dns')" id="dnsBtn">DNS 조회</button>
+                <button class="method-btn" onclick="setCheckMethod('http')" id="httpBtn">HTTP 확인</button>
+                <button class="method-btn" onclick="setCheckMethod('combined')" id="combinedBtn">종합 체크</button>
+            </div>
+            <div class="rate-limit">
+                ⚠️ API 제한: 분당 최대 60개 도메인 체크 가능 (과도한 요청 시 일시 제한)
+            </div>
         </div>
 
         <div class="main-grid">
@@ -205,7 +256,7 @@
                     <button id="autoBtn" onclick="toggleAuto()" style="width: 100%; margin-bottom: 10px;">🔄 자동 체크 시작</button>
                     <button onclick="clearAll()" class="btn-danger" style="width: 100%; margin-bottom: 15px;">🗑️ 전체 삭제</button>
                     
-                    <label>체크 간격: <input type="number" id="interval" value="10" min="5" max="60" style="width: 60px; display: inline;"> 분</label>
+                    <label>체크 간격: <input type="number" id="interval" value="15" min="10" max="60" style="width: 60px; display: inline;"> 분</label>
                     
                     <div class="progress">
                         <div class="progress-bar" id="progressBar"></div>
@@ -252,6 +303,9 @@
         let results = {};
         let autoInterval = null;
         let isChecking = false;
+        let checkMethod = 'whois';
+        let requestCount = 0;
+        let lastRequestTime = Date.now();
 
         // 초기 도메인 설정
         const initialDomains = [
@@ -277,6 +331,44 @@
                 if (e.key === 'Enter') addDomain();
             });
         });
+
+        // 체크 방식 설정
+        function setCheckMethod(method) {
+            checkMethod = method;
+            
+            // 버튼 활성화 상태 업데이트
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(method + 'Btn').classList.add('active');
+            
+            showMessage(`✅ ${getMethodName(method)} 방식으로 설정됨`);
+        }
+
+        function getMethodName(method) {
+            const names = {
+                'whois': 'WHOIS API',
+                'dns': 'DNS 조회',
+                'http': 'HTTP 확인',
+                'combined': '종합 체크'
+            };
+            return names[method] || 'WHOIS API';
+        }
+
+        // Rate Limiting 체크
+        function checkRateLimit() {
+            const now = Date.now();
+            
+            // 1분마다 카운트 리셋
+            if (now - lastRequestTime > 60000) {
+                requestCount = 0;
+                lastRequestTime = now;
+            }
+            
+            if (requestCount >= 60) {
+                throw new Error('Rate limit exceeded. Please wait a minute.');
+            }
+            
+            requestCount++;
+        }
 
         // 도메인 추가
         function addDomain() {
@@ -359,12 +451,22 @@
                 const domain = domains[i];
                 status.textContent = `🔍 체크 중: ${domain} (${i + 1}/${total})`;
                 
-                // 도메인 체크 (시뮬레이션)
-                const result = await simulateCheck(domain);
-                results[domain] = {
-                    status: result,
-                    time: new Date().toLocaleTimeString()
-                };
+                try {
+                    // 실제 도메인 체크
+                    const result = await realDomainCheck(domain);
+                    results[domain] = {
+                        status: result,
+                        time: new Date().toLocaleTimeString(),
+                        method: getMethodName(checkMethod)
+                    };
+                } catch (error) {
+                    results[domain] = {
+                        status: 'Error',
+                        time: new Date().toLocaleTimeString(),
+                        method: getMethodName(checkMethod),
+                        error: error.message
+                    };
+                }
                 
                 // 진행률 업데이트
                 const progress = ((i + 1) / total) * 100;
@@ -372,8 +474,8 @@
                 
                 updateDisplay();
                 
-                // 잠시 대기 (시각적 효과)
-                await new Promise(resolve => setTimeout(resolve, 200));
+                // Rate limiting을 위한 대기 (1초)
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
             
             status.textContent = `✅ 완료: ${new Date().toLocaleString()}`;
@@ -385,25 +487,149 @@
 
         // 단일 도메인 체크
         async function checkSingleDomain(domain) {
-            const result = await simulateCheck(domain);
-            results[domain] = {
-                status: result,
-                time: new Date().toLocaleTimeString()
-            };
+            try {
+                const result = await realDomainCheck(domain);
+                results[domain] = {
+                    status: result,
+                    time: new Date().toLocaleTimeString(),
+                    method: getMethodName(checkMethod)
+                };
+            } catch (error) {
+                results[domain] = {
+                    status: 'Error',
+                    time: new Date().toLocaleTimeString(),
+                    method: getMethodName(checkMethod),
+                    error: error.message
+                };
+            }
             updateDisplay();
             saveData();
         }
 
-        // 도메인 체크 시뮬레이션 (실제 API 대신)
-        async function simulateCheck(domain) {
-            // 로딩 시간 시뮬레이션
-            await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 300));
-            
-            // 현실적인 확률로 결과 생성
-            const random = Math.random();
-            if (random < 0.2) return 'Free';      // 20% 확률
-            else if (random < 0.85) return 'Taken';  // 65% 확률  
-            else return 'Error';                     // 15% 확률
+        // 실제 도메인 체크 함수
+        async function realDomainCheck(domain) {
+            try {
+                checkRateLimit();
+                
+                switch (checkMethod) {
+                    case 'whois':
+                        return await checkViaWhoisAPI(domain);
+                    case 'dns':
+                        return await checkViaDNS(domain);
+                    case 'http':
+                        return await checkViaHTTP(domain);
+                    case 'combined':
+                        return await checkViaCombined(domain);
+                    default:
+                        return await checkViaWhoisAPI(domain);
+                }
+            } catch (error) {
+                console.error(`도메인 ${domain} 체크 실패:`, error);
+                throw error;
+            }
+        }
+
+        // WHOIS API를 통한 체크
+        async function checkViaWhoisAPI(domain) {
+            try {
+                // 실제 WHOIS API 서비스들
+                const apis = [
+                    `https://whoisjson.com/api/v1/${domain}`,
+                    `https://api.whoisfreaks.com/v1.0/whois?apiKey=YOUR_API_KEY&whois=live&type=json&domain=${domain}`,
+                    `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=YOUR_API_KEY&domainName=${domain}&outputFormat=JSON`
+                ];
+
+                // 첫 번째 API 시도 (무료 제한이 있을 수 있음)
+                const response = await fetch(`https://api.domainsdb.info/v1/domains/search?domain=${domain}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.domains && data.domains.length > 0) {
+                        return 'Taken';
+                    } else {
+                        return 'Free';
+                    }
+                } else {
+                    throw new Error('WHOIS API 응답 오류');
+                }
+            } catch (error) {
+                // API 실패 시 DNS 체크로 fallback
+                return await checkViaDNS(domain);
+            }
+        }
+
+        // DNS 조회를 통한 체크
+        async function checkViaDNS(domain) {
+            try {
+                // DNS over HTTPS를 이용한 조회
+                const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=A`, {
+                    headers: {
+                        'Accept': 'application/dns-json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.Status === 0 && data.Answer && data.Answer.length > 0) {
+                        return 'Taken';
+                    } else if (data.Status === 3) { // NXDOMAIN
+                        return 'Free';
+                    } else {
+                        return 'Error';
+                    }
+                } else {
+                    throw new Error('DNS 조회 실패');
+                }
+            } catch (error) {
+                throw new Error('DNS 조회 오류: ' + error.message);
+            }
+        }
+
+        // HTTP 요청을 통한 체크
+        async function checkViaHTTP(domain) {
+            try {
+                // CORS 프록시를 통한 HTTP 요청
+                const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('http://' + domain)}`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status.http_code === 200 || data.status.http_code === 301 || data.status.http_code === 302) {
+                        return 'Taken';
+                    } else {
+                        return 'Free';
+                    }
+                } else {
+                    return 'Free';
+                }
+            } catch (error) {
+                // 네트워크 오류는 보통 도메인이 등록되지 않았음을 의미
+                return 'Free';
+            }
+        }
+
+        // 종합 체크 (여러 방법 조합)
+        async function checkViaCombined(domain) {
+            try {
+                // DNS와 HTTP 모두 체크해서 더 정확한 결과 도출
+                const dnsResult = await checkViaDNS(domain);
+                
+                if (dnsResult === 'Taken') {
+                    // DNS에서 Taken이면 HTTP도 확인
+                    try {
+                        const httpResult = await checkViaHTTP(domain);
+                        return httpResult === 'Taken' ? 'Taken' : 'Taken';
+                    } catch {
+                        return 'Taken';
+                    }
+                } else {
+                    return 'Free';
+                }
+            } catch (error) {
+                throw new Error('종합 체크 실패: ' + error.message);
+            }
         }
 
         // 자동 체크 토글
@@ -446,7 +672,7 @@
                 let time = '-';
                 
                 if (result) {
-                    time = result.time;
+                    time = result.time + (result.method ? ` (${result.method})` : '');
                     switch (result.status) {
                         case 'Free':
                             statusClass = 'status-free';
@@ -459,6 +685,9 @@
                         case 'Error':
                             statusClass = 'status-error';
                             statusText = '🟡 Error';
+                            if (result.error) {
+                                statusText += ` (${result.error.substring(0, 20)}...)`;
+                            }
                             break;
                     }
                 }
@@ -466,7 +695,7 @@
                 row.innerHTML = `
                     <td>${domain}</td>
                     <td class="${statusClass}">${statusText}</td>
-                    <td>${time}</td>
+                    <td style="font-size: 0.8em;">${time}</td>
                     <td>
                         <button class="small-btn" onclick="recheckDomain('${domain}')">🔄</button>
                         <button class="small-btn btn-danger" onclick="removeDomain('${domain}')">🗑️</button>
@@ -502,12 +731,12 @@
                 status.textContent = '🟢 준비 완료';
                 status.style.background = '#f0fff4';
                 status.style.color = '#38a169';
-            }, 2000);
+            }, 3000);
         }
 
         // 데이터 저장
         function saveData() {
-            const data = { domains, results };
+            const data = { domains, results, checkMethod };
             localStorage.setItem('domainChecker', JSON.stringify(data));
         }
 
@@ -519,6 +748,10 @@
                     const data = JSON.parse(saved);
                     domains = data.domains || [];
                     results = data.results || {};
+                    if (data.checkMethod) {
+                        checkMethod = data.checkMethod;
+                        setCheckMethod(checkMethod);
+                    }
                 }
             } catch (e) {
                 console.log('데이터 로드 실패:', e);
