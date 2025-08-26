@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌐 Domain Checker Pro - Enhanced Edition</title>
     <meta name="description" content="Ultra-stable domain availability checker with bulletproof error handling">
-    <meta name="keywords" content="domain checker, whois, domain registration, free domains">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
     
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
             --primary: #667eea;
             --primary-dark: #764ba2;
@@ -35,22 +40,620 @@
             --border: #4a5568;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: var(--gradient);
             min-height: 100vh;
             color: var(--text-primary);
             line-height: 1.6;
-            padding: 10px;
+            padding: 20px;
             position: relative;
             overflow-x: hidden;
-            font-size: 14px;
+            font-size: 16px;
+        }
+
+        /* 애니메이션 배경 */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg) scale(1); }
+            50% { transform: translateY(50vh) rotate(180deg) scale(1.2); }
+            100% { transform: translateY(-100px) rotate(360deg) scale(1); }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 헤더 */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            position: relative;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .control-btn {
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+            user-select: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover, .control-btn.active {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 25px;
+            background: rgba(72, 187, 120, 0.2);
+            color: var(--success);
+            border: 2px solid rgba(72, 187, 120, 0.3);
+        }
+
+        .connection-status.offline {
+            background: rgba(245, 101, 101, 0.2);
+            color: var(--error);
+            border-color: rgba(245, 101, 101, 0.3);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        /* 메인 그리드 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 30px;
+            align-items: start;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+        }
+
+        /* 카드 */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            user-select: none;
+        }
+
+        /* 폼 컨트롤 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            user-select: none;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-family: inherit;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-primary);
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .form-hint {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 8px;
+            display: block;
+            opacity: 0.8;
+        }
+
+        /* 확장자 선택 */
+        .extension-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .extension-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .extension-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .extension-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        /* 버튼 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            white-space: nowrap;
+            min-height: 56px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* 설정 섹션 */
+        .settings-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid var(--border);
+        }
+
+        .settings-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 8px;
+            transition: var(--transition);
+            margin-bottom: 8px;
+            user-select: none;
+        }
+
+        .setting-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .setting-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .setting-item span {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        /* 결과 영역 */
+        .results-container {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            position: relative;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .results-container.has-results {
+            display: block;
+            min-height: auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 60px 40px;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        /* 결과 헤더 */
+        .results-header {
+            padding: 25px 30px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .results-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .stats-badges {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stat-badge.available {
+            background: rgba(72, 187, 120, 0.1);
+            color: var(--success);
+            border: 2px solid rgba(72, 187, 120, 0.2);
+        }
+
+        .stat-badge.taken {
+            background: rgba(245, 101, 101, 0.1);
+            color: var(--error);
+            border: 2px solid rgba(245, 101, 101, 0.2);
+        }
+
+        .stat-badge.checking {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .results-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .results-btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .results-btn.export {
+            background: var(--primary);
+            color: white;
+        }
+
+        .results-btn.filter {
+            background: var(--success);
+            color: white;
+        }
+
+        .results-btn.show-all {
+            background: var(--info);
+            color: white;
+        }
+
+        .results-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* 결과 목록 */
+        .results-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .domain-result {
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .domain-result:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateX(5px);
+        }
+
+        .domain-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .domain-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .domain-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .result-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .status-badge.available {
+            background: rgba(72, 187, 120, 0.1);
+            color: var(--success);
+            border: 2px solid rgba(72, 187, 120, 0.2);
+        }
+
+        .status-badge.taken {
+            background: rgba(245, 101, 101, 0.1);
+            color: var(--error);
+            border: 2px solid rgba(245, 101, 101, 0.2);
+        }
+
+        .status-badge.checking {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .register-btn {
+            padding: 6px 12px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .register-btn:hover {
+            background: #38a169;
+            transform: translateY(-1px);
         }
 
         /* 로딩 오버레이 */
@@ -85,72 +688,7 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 애니메이션 */
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInFromTop {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                max-height: 0;
-            }
-            to {
-                opacity: 1;
-                max-height: 200px;
-            }
-        }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        @keyframes float {
-            0% { transform: translateY(100vh) rotate(0deg) scale(1); }
-            50% { transform: translateY(50vh) rotate(180deg) scale(1.2); }
-            100% { transform: translateY(-100px) rotate(360deg) scale(1); }
-        }
-
-        /* 에러 처리 */
-        .error-boundary {
-            background: linear-gradient(135deg, #fed7d7, #feb2b2);
-            border: 2px solid var(--error);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-            color: #742a2a;
-        }
-
+        /* 오프라인 배너 */
         .offline-banner {
             position: fixed;
             top: 0;
@@ -159,404 +697,23 @@
             background: var(--error);
             color: white;
             text-align: center;
-            padding: 10px;
+            padding: 12px;
             z-index: 1000;
             transform: translateY(-100%);
             transition: var(--transition);
+            font-weight: 600;
         }
 
         .offline-banner.show {
             transform: translateY(0);
         }
 
-        /* 배경 애니메이션 */
-        .animated-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.1;
-            pointer-events: none;
-        }
-
-        .floating-shapes {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-
-        .shape {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 20s infinite linear;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* 헤더 */
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-            position: relative;
-            animation: fadeInDown 0.8s ease-out;
-        }
-
-        .header h1 {
-            font-size: clamp(2rem, 5vw, 3rem);
-            font-weight: 800;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            background: linear-gradient(45deg, #fff, #e2e8f0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header-controls {
-            position: absolute;
-            top: 0;
-            right: 0;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .control-btn {
-            padding: 8px 12px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.85rem;
-            backdrop-filter: blur(10px);
-            white-space: nowrap;
-            user-select: none;
-        }
-
-        .control-btn:hover, .control-btn.active {
-            background: rgba(255,255,255,0.25);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        /* 연결 상태 */
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.8rem;
-            padding: 4px 8px;
-            border-radius: 20px;
-            background: rgba(72, 187, 120, 0.2);
-            color: var(--success);
-        }
-
-        .connection-status.offline {
-            background: rgba(245, 101, 101, 0.2);
-            color: var(--error);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-            animation: pulse 2s infinite;
-        }
-
-        /* 메인 레이아웃 */
-        .main-grid {
-            display: grid;
-            grid-template-columns: minmax(350px, 1fr) 2fr;
-            gap: 25px;
-            align-items: start;
-        }
-
-        /* 카드 */
-        .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            padding: 24px;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient);
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            user-select: none;
-        }
-
-        /* 폼 컨트롤 */
-        .form-group {
-            margin-bottom: 16px;
-            position: relative;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            user-select: none;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--border);
-            border-radius: var(--border-radius);
-            font-size: 14px;
-            font-family: inherit;
-            transition: var(--transition);
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--text-primary);
-            resize: none;
-        }
-
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            background: white;
-        }
-
-        /* 버튼 */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
-            font-family: inherit;
-            position: relative;
-            overflow: hidden;
-            user-select: none;
-            white-space: nowrap;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn:hover:not(:disabled)::before {
-            left: 100%;
-        }
-
-        .btn-primary {
-            background: var(--gradient);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        .btn-full {
-            width: 100%;
-        }
-
-        /* 결과 영역 */
-        .results-container {
-            background: var(--bg-card);
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            position: relative;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .results-container.has-results {
-            display: block;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-secondary);
-            padding: 40px 20px;
-        }
-
-        .empty-state .icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .domain-result {
-            padding: 16px 20px;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: var(--transition);
-        }
-
-        .domain-result:hover {
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .domain-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .domain-name {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .status-badge.available {
-            background: rgba(72, 187, 120, 0.1);
-            color: var(--success);
-        }
-
-        .status-badge.taken {
-            background: rgba(245, 101, 101, 0.1);
-            color: var(--error);
-        }
-
-        .status-badge.checking {
-            background: rgba(102, 126, 234, 0.1);
-            color: var(--primary);
-            animation: pulse 2s infinite;
-        }
-
-        /* 반응형 디자인 */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px 10px;
-            }
-
-            .main-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .header-controls {
-                position: static;
-                justify-content: center;
-                margin-top: 15px;
-            }
-
-            .card {
-                padding: 20px 16px;
-            }
-
-            .btn {
-                padding: 14px 20px;
-                font-size: 16px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                font-size: 16px;
-                padding: 5px;
-            }
-
-            .container {
-                padding: 10px 5px;
-            }
-
-            .card {
-                padding: 16px 12px;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .control-btn {
-                font-size: 14px;
-                padding: 10px 16px;
-            }
-        }
-
-        /* 디버그 패널 스타일 */
+        /* 디버그 패널 */
         .debug-panel {
             position: fixed;
             top: 0;
-            right: -400px;
-            width: 400px;
+            right: -450px;
+            width: 450px;
             height: 100vh;
             background: rgba(0, 0, 0, 0.95);
             color: #00ff00;
@@ -617,130 +774,93 @@
             border-bottom: 1px solid rgba(255, 255, 0, 0.3);
         }
 
-        .debug-log {
-            max-height: 200px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 3px;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .debug-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .debug-btn {
-            background: rgba(0, 255, 0, 0.1);
-            border: 1px solid #00ff00;
-            color: #00ff00;
-            padding: 8px 12px;
-            cursor: pointer;
-            border-radius: 3px;
-            font-size: 11px;
-            transition: var(--transition);
-        }
-
-        .debug-btn:hover {
-            background: rgba(0, 255, 0, 0.2);
-        }
-
-        .debug-btn:active {
-            background: rgba(0, 255, 0, 0.3);
-        }
-
-        .debug-variable {
-            margin: 5px 0;
-            padding: 5px;
-            background: rgba(0, 255, 0, 0.05);
-            border-radius: 3px;
-        }
-
-        .debug-variable-name {
-            color: #00ffff;
-            font-weight: bold;
-        }
-
-        .debug-variable-value {
-            color: #ffffff;
-            margin-left: 10px;
-        }
-
-        .debug-error {
-            color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-            padding: 8px;
-            border-radius: 3px;
-            margin: 5px 0;
-            border-left: 3px solid #ff6b6b;
-        }
-
-        .debug-warning {
-            color: #ffa500;
-            background: rgba(255, 165, 0, 0.1);
-            padding: 8px;
-            border-radius: 3px;
-            margin: 5px 0;
-            border-left: 3px solid #ffa500;
-        }
-
-        .debug-info {
-            color: #00bfff;
-            background: rgba(0, 191, 255, 0.1);
-            padding: 8px;
-            border-radius: 3px;
-            margin: 5px 0;
-            border-left: 3px solid #00bfff;
-        }
-
-        .debug-timestamp {
-            color: #888;
-            font-size: 10px;
-        }
-
-        .performance-meter {
-            width: 100%;
-            height: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 5px 0;
-        }
-
-        .performance-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* 모바일에서 디버그 패널 */
-        @media (max-width: 768px) {
-            .debug-panel {
-                width: 100%;
-                right: -100%;
-            }
-        }
+        /* 다크 모드 */
         [data-theme="dark"] .card {
             border-color: rgba(255, 255, 255, 0.1);
         }
 
-        [data-theme="dark"] input,
         [data-theme="dark"] textarea,
-        [data-theme="dark"] select {
+        [data-theme="dark"] input[type="text"] {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.2);
             color: var(--text-primary);
         }
 
-        [data-theme="dark"] input:focus,
         [data-theme="dark"] textarea:focus,
-        [data-theme="dark"] select:focus {
+        [data-theme="dark"] input[type="text"]:focus {
             background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* 키보드 단축키 도움말 */
+        .shortcuts-help {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .shortcuts-help:hover {
+            opacity: 1;
+        }
+
+        .shortcuts-help div:first-child {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffd700;
+        }
+
+        .shortcuts-help div {
+            margin: 2px 0;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .header-controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .control-btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .main-grid {
+                gap: 20px;
+            }
+
+            .debug-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .shortcuts-help {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 12px;
+                font-size: 0.7rem;
+            }
         }
     </style>
 </head>
@@ -763,6 +883,9 @@
     <div class="container">
         <!-- 헤더 -->
         <header class="header">
+            <h1>🌐 Domain Checker Pro</h1>
+            <p>실시간 도메인 가용성 검사 도구 - 빠르고 정확한 도메인 조회</p>
+            
             <div class="header-controls">
                 <div class="connection-status" id="connectionStatus">
                     <div class="status-dot"></div>
@@ -778,10 +901,6 @@
                     🐛 디버그
                 </button>
             </div>
-            <h1>🌐 Domain Checker Pro</h1>
-            <p style="opacity: 0.9; margin-top: 10px;">
-                실시간 도메인 가용성 검사 도구 - 빠르고 정확한 도메인 조회
-            </p>
         </header>
 
         <!-- 메인 그리드 -->
@@ -797,36 +916,41 @@
                     <div class="input-wrapper">
                         <textarea 
                             id="domainInput" 
-                            placeholder="example.com&#10;test.net&#10;또는 여러 도메인을 한 줄씩 입력"
-                            rows="4"
+                            placeholder="example.com&#10;test.net&#10;mysite.org&#10;&#10;또는 여러 도메인을 한 줄씩 입력하세요"
                             oninput="validateInput()"
                         ></textarea>
                     </div>
-                    <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px; display: block;">
-                        💡 여러 도메인은 줄바꿈으로 구분하세요
+                    <small class="form-hint">
+                        💡 여러 도메인은 줄바꿈으로 구분하세요. 최대 50개까지 동시 검사 가능합니다.
                     </small>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">확장자 선택</label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px;">
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
-                            <input type="checkbox" value="com" checked onchange="updateExtensions()"> .com
+                    <div class="extension-grid">
+                        <label class="extension-item">
+                            <input type="checkbox" value="com" checked onchange="updateExtensions()">
+                            <span>.com</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
-                            <input type="checkbox" value="net" checked onchange="updateExtensions()"> .net
+                        <label class="extension-item">
+                            <input type="checkbox" value="net" checked onchange="updateExtensions()">
+                            <span>.net</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
-                            <input type="checkbox" value="org" checked onchange="updateExtensions()"> .org
+                        <label class="extension-item">
+                            <input type="checkbox" value="org" checked onchange="updateExtensions()">
+                            <span>.org</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
-                            <input type="checkbox" value="co.kr" onchange="updateExtensions()"> .co.kr
+                        <label class="extension-item">
+                            <input type="checkbox" value="co.kr" onchange="updateExtensions()">
+                            <span>.co.kr</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
-                            <input type="checkbox" value="io" onchange="updateExtensions()"> .io
+                        <label class="extension-item">
+                            <input type="checkbox" value="io" onchange="updateExtensions()">
+                            <span>.io</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
-                            <input type="checkbox" value="dev" onchange="updateExtensions()"> .dev
+                        <label class="extension-item">
+                            <input type="checkbox" value="dev" onchange="updateExtensions()">
+                            <span>.dev</span>
                         </label>
                     </div>
                 </div>
@@ -835,20 +959,18 @@
                     🚀 도메인 검사 시작
                 </button>
 
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
-                    <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--text-primary);">⚙️ 설정</h3>
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="autoRefresh" onchange="updateSettings()">
-                            <span style="font-size: 0.9rem;">자동 새로고침 (30초)</span>
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="soundNotification" onchange="updateSettings()">
-                            <span style="font-size: 0.9rem;">소리 알림</span>
-                        </label>
-                    </div>
+                <div class="settings-section">
+                    <h3 class="settings-title">⚙️ 설정</h3>
+                    
+                    <label class="setting-item">
+                        <input type="checkbox" id="autoRefresh" onchange="updateSettings()">
+                        <span>자동 새로고침 (30초마다)</span>
+                    </label>
+                    
+                    <label class="setting-item">
+                        <input type="checkbox" id="soundNotification" onchange="updateSettings()">
+                        <span>완료 시 소리 알림</span>
+                    </label>
                 </div>
             </div>
 
@@ -857,10 +979,83 @@
                 <div class="empty-state">
                     <div class="icon">🔍</div>
                     <h3>도메인을 입력하고 검사를 시작하세요</h3>
-                    <p>여러 도메인을 동시에 확인할 수 있습니다</p>
+                    <p>여러 도메인을 동시에 확인할 수 있습니다.<br>실시간으로 결과를 확인해보세요!</p>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- 디버그 패널 -->
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <div>
+                <span style="color: #ffff00;">🐛 Debug Console</span>
+                <span class="debug-timestamp" id="debugTime"></span>
+            </div>
+            <button class="debug-close" onclick="toggleDebugPanel()">✕</button>
+        </div>
+        <div class="debug-content">
+            <!-- 시스템 정보 -->
+            <div class="debug-section">
+                <div class="debug-section-title">📊 System Info</div>
+                <div id="systemInfo"></div>
+            </div>
+
+            <!-- 성능 모니터 -->
+            <div class="debug-section">
+                <div class="debug-section-title">⚡ Performance</div>
+                <div>Memory Usage:</div>
+                <div class="performance-meter">
+                    <div class="performance-bar" id="memoryBar"></div>
+                </div>
+                <div>DOM Nodes: <span id="domNodes">0</span></div>
+                <div>Event Listeners: <span id="eventListeners">0</span></div>
+                <div>Load Time: <span id="loadTime">0ms</span></div>
+            </div>
+
+            <!-- 변수 모니터 -->
+            <div class="debug-section">
+                <div class="debug-section-title">🔍 Variables</div>
+                <div id="variableMonitor"></div>
+            </div>
+
+            <!-- 네트워크 모니터 -->
+            <div class="debug-section">
+                <div class="debug-section-title">🌐 Network</div>
+                <div>Connection: <span id="networkStatus">Unknown</span></div>
+                <div>Speed: <span id="networkSpeed">Unknown</span></div>
+                <div>Type: <span id="networkType">Unknown</span></div>
+            </div>
+
+            <!-- 컨트롤 패널 -->
+            <div class="debug-section">
+                <div class="debug-section-title">🎮 Controls</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="debug-btn" onclick="debugTest()">Test Functions</button>
+                    <button class="debug-btn" onclick="debugClearLogs()">Clear Logs</button>
+                    <button class="debug-btn" onclick="debugExportLogs()">Export Logs</button>
+                    <button class="debug-btn" onclick="debugSimulateError()">Test Error</button>
+                    <button class="debug-btn" onclick="debugMemoryTest()">Memory Test</button>
+                    <button class="debug-btn" onclick="debugPerformanceTest()">Perf Test</button>
+                </div>
+            </div>
+
+            <!-- 로그 -->
+            <div class="debug-section">
+                <div class="debug-section-title">📝 Debug Logs</div>
+                <div style="max-height: 200px; overflow-y: auto; background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 3px; white-space: pre-wrap; word-break: break-all;" id="debugLog"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 키보드 단축키 도움말 -->
+    <div class="shortcuts-help">
+        <div>💡 키보드 단축키</div>
+        <div>Ctrl+Enter: 검사 시작</div>
+        <div>Ctrl+K: 입력창 포커스</div>
+        <div>Ctrl+D: 다크모드 토글</div>
+        <div>Ctrl+`: 디버그 패널</div>
+        <div>Esc: 초기화</div>
     </div>
 
     <script>
@@ -897,26 +1092,22 @@
             
             debugLogs.push(logEntry);
             
-            // 로그 개수 제한 (성능을 위해)
             if (debugLogs.length > 1000) {
                 debugLogs.shift();
             }
             
-            // 콘솔에도 출력
             const consoleMethod = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
             console[consoleMethod](`[${timestamp}] ${message}`, data || '');
             
-            // 디버그 패널 업데이트
             if (debugEnabled) {
                 updateDebugPanel();
             }
             
-            // 성능 카운터 업데이트
             if (type === 'error') performanceMetrics.errors++;
             if (type === 'warning') performanceMetrics.warnings++;
         }
 
-        // 에러 처리 강화
+        // 에러 처리
         window.addEventListener('error', function(event) {
             debugLog(`Global Error: ${event.message}`, 'error', {
                 filename: event.filename,
@@ -932,333 +1123,6 @@
                 promise: event.promise
             });
         });
-
-        // 디버그 패널 토글
-        function toggleDebugPanel() {
-            const panel = document.getElementById('debugPanel');
-            const toggle = document.getElementById('debugToggle');
-            
-            debugEnabled = !debugEnabled;
-            
-            if (debugEnabled) {
-                panel.classList.add('show');
-                toggle.classList.add('active');
-                toggle.innerHTML = '🐛 디버그 ON';
-                
-                debugLog('Debug panel opened', 'info');
-                startDebugMonitoring();
-                updateDebugPanel();
-            } else {
-                panel.classList.remove('show');
-                toggle.classList.remove('active');
-                toggle.innerHTML = '🐛 디버그';
-                
-                stopDebugMonitoring();
-                debugLog('Debug panel closed', 'info');
-            }
-        }
-
-        // 디버그 모니터링 시작
-        function startDebugMonitoring() {
-            debugUpdateInterval = setInterval(() => {
-                if (debugEnabled) {
-                    updatePerformanceMetrics();
-                    updateVariableMonitor();
-                    updateNetworkInfo();
-                }
-            }, 1000);
-        }
-
-        // 디버그 모니터링 중지
-        function stopDebugMonitoring() {
-            if (debugUpdateInterval) {
-                clearInterval(debugUpdateInterval);
-                debugUpdateInterval = null;
-            }
-        }
-
-        // 디버그 패널 업데이트
-        function updateDebugPanel() {
-            if (!debugEnabled) return;
-            
-            updateSystemInfo();
-            updateDebugLogs();
-            updateDebugTime();
-        }
-
-        // 시스템 정보 업데이트
-        function updateSystemInfo() {
-            const systemInfo = document.getElementById('systemInfo');
-            if (!systemInfo) return;
-            
-            systemInfo.innerHTML = `
-                <div class="debug-variable">
-                    <span class="debug-variable-name">User Agent:</span>
-                    <div class="debug-variable-value">${navigator.userAgent}</div>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">Screen:</span>
-                    <span class="debug-variable-value">${screen.width}x${screen.height}</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">Viewport:</span>
-                    <span class="debug-variable-value">${window.innerWidth}x${window.innerHeight}</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">Language:</span>
-                    <span class="debug-variable-value">${navigator.language}</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">Online:</span>
-                    <span class="debug-variable-value">${navigator.onLine ? 'Yes' : 'No'}</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">Cookies Enabled:</span>
-                    <span class="debug-variable-value">${navigator.cookieEnabled ? 'Yes' : 'No'}</span>
-                </div>
-            `;
-        }
-
-        // 성능 메트릭 업데이트
-        function updatePerformanceMetrics() {
-            const memoryBar = document.getElementById('memoryBar');
-            const domNodes = document.getElementById('domNodes');
-            const eventListeners = document.getElementById('eventListeners');
-            const loadTime = document.getElementById('loadTime');
-            
-            if (memoryBar) {
-                // 메모리 사용량 시뮬레이션 (실제로는 performance.memory API 사용)
-                const memoryUsage = Math.random() * 100;
-                memoryBar.style.width = memoryUsage + '%';
-            }
-            
-            if (domNodes) {
-                domNodes.textContent = document.querySelectorAll('*').length;
-            }
-            
-            if (eventListeners) {
-                // 이벤트 리스너 추정치 (정확한 카운트는 복잡함)
-                eventListeners.textContent = document.querySelectorAll('[onclick], [onchange], [oninput]').length + 10;
-            }
-            
-            if (loadTime) {
-                loadTime.textContent = (Date.now() - performanceMetrics.startTime) + 'ms';
-            }
-        }
-
-        // 변수 모니터 업데이트
-        function updateVariableMonitor() {
-            const monitor = document.getElementById('variableMonitor');
-            if (!monitor) return;
-            
-            monitor.innerHTML = `
-                <div class="debug-variable">
-                    <span class="debug-variable-name">selectedExtensions:</span>
-                    <span class="debug-variable-value">[${selectedExtensions.join(', ')}]</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">isChecking:</span>
-                    <span class="debug-variable-value">${isChecking}</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">checkResults.length:</span>
-                    <span class="debug-variable-value">${checkResults.length}</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">debugLogs.length:</span>
-                    <span class="debug-variable-value">${debugLogs.length}</span>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">settings:</span>
-                    <div class="debug-variable-value">${JSON.stringify(settings, null, 2)}</div>
-                </div>
-                <div class="debug-variable">
-                    <span class="debug-variable-name">Performance:</span>
-                    <div class="debug-variable-value">
-                        Errors: ${performanceMetrics.errors}, 
-                        Warnings: ${performanceMetrics.warnings}, 
-                        API Calls: ${performanceMetrics.apiCalls}
-                    </div>
-                </div>
-            `;
-        }
-
-        // 네트워크 정보 업데이트
-        function updateNetworkInfo() {
-            const status = document.getElementById('networkStatus');
-            const speed = document.getElementById('networkSpeed');
-            const type = document.getElementById('networkType');
-            
-            if (status) {
-                status.textContent = navigator.onLine ? 'Online' : 'Offline';
-                status.style.color = navigator.onLine ? '#00ff00' : '#ff6b6b';
-            }
-            
-            if (navigator.connection) {
-                if (speed) speed.textContent = navigator.connection.downlink + ' Mbps';
-                if (type) type.textContent = navigator.connection.effectiveType || 'Unknown';
-            } else {
-                if (speed) speed.textContent = 'Unknown';
-                if (type) type.textContent = 'Unknown';
-            }
-        }
-
-        // 디버그 로그 업데이트
-        function updateDebugLogs() {
-            const logElement = document.getElementById('debugLog');
-            if (!logElement) return;
-            
-            const recentLogs = debugLogs.slice(-50); // 최근 50개만 표시
-            
-            logElement.innerHTML = recentLogs.map(log => {
-                const time = new Date(log.timestamp).toLocaleTimeString();
-                const className = `debug-${log.type}`;
-                
-                return `
-                    <div class="${className}">
-                        <span class="debug-timestamp">[${time}]</span> ${log.message}
-                        ${log.data ? `<pre style="margin: 5px 0; font-size: 10px;">${log.data}</pre>` : ''}
-                    </div>
-                `;
-            }).join('');
-            
-            // 자동 스크롤
-            logElement.scrollTop = logElement.scrollHeight;
-        }
-
-        // 디버그 시간 업데이트
-        function updateDebugTime() {
-            const timeElement = document.getElementById('debugTime');
-            if (timeElement) {
-                timeElement.textContent = new Date().toLocaleTimeString();
-            }
-        }
-
-        // 디버그 컨트롤 함수들
-        function debugTest() {
-            debugLog('Testing all major functions...', 'info');
-            
-            try {
-                // 입력 검증 테스트
-                const originalValue = document.getElementById('domainInput').value;
-                document.getElementById('domainInput').value = 'test.com\nexample.org';
-                validateInput();
-                document.getElementById('domainInput').value = originalValue;
-                debugLog('Input validation test passed', 'info');
-                
-                // 설정 테스트
-                const originalSettings = {...settings};
-                updateSettings();
-                settings = originalSettings;
-                debugLog('Settings test passed', 'info');
-                
-                // 테마 테스트
-                const originalTheme = document.body.dataset.theme;
-                toggleTheme();
-                setTimeout(() => {
-                    toggleTheme();
-                    document.body.dataset.theme = originalTheme;
-                    debugLog('Theme test passed', 'info');
-                }, 100);
-                
-                debugLog('All tests completed successfully', 'info');
-            } catch (error) {
-                debugLog('Test failed', 'error', error);
-            }
-        }
-
-        function debugClearLogs() {
-            debugLogs = [];
-            performanceMetrics.errors = 0;
-            performanceMetrics.warnings = 0;
-            performanceMetrics.apiCalls = 0;
-            updateDebugPanel();
-            debugLog('Debug logs cleared', 'info');
-        }
-
-        function debugExportLogs() {
-            const logData = {
-                timestamp: new Date().toISOString(),
-                logs: debugLogs,
-                metrics: performanceMetrics,
-                systemInfo: {
-                    userAgent: navigator.userAgent,
-                    screen: `${screen.width}x${screen.height}`,
-                    viewport: `${window.innerWidth}x${window.innerHeight}`,
-                    language: navigator.language,
-                    online: navigator.onLine
-                }
-            };
-            
-            const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `debug-log-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            debugLog('Debug logs exported', 'info');
-        }
-
-        function debugSimulateError() {
-            debugLog('Simulating error for testing...', 'warning');
-            
-            setTimeout(() => {
-                try {
-                    throw new Error('This is a simulated error for testing purposes');
-                } catch (error) {
-                    debugLog('Simulated error caught', 'error', error);
-                }
-            }, 100);
-        }
-
-        function debugMemoryTest() {
-            debugLog('Starting memory stress test...', 'info');
-            
-            // 메모리 사용량 테스트
-            const testArray = [];
-            for (let i = 0; i < 100000; i++) {
-                testArray.push({ id: i, data: 'test data '.repeat(10) });
-            }
-            
-            debugLog(`Created array with ${testArray.length} items`, 'info');
-            
-            setTimeout(() => {
-                testArray.length = 0;
-                debugLog('Memory test completed, array cleared', 'info');
-            }, 2000);
-        }
-
-        function debugPerformanceTest() {
-            debugLog('Starting performance test...', 'info');
-            
-            const start = performance.now();
-            
-            // DOM 조작 테스트
-            const testDiv = document.createElement('div');
-            for (let i = 0; i < 1000; i++) {
-                const span = document.createElement('span');
-                span.textContent = `Test ${i}`;
-                testDiv.appendChild(span);
-            }
-            
-            const domTime = performance.now() - start;
-            
-            // 계산 테스트
-            const calcStart = performance.now();
-            let result = 0;
-            for (let i = 0; i < 1000000; i++) {
-                result += Math.sqrt(i);
-            }
-            const calcTime = performance.now() - calcStart;
-            
-            debugLog('Performance test completed', 'info', {
-                domManipulation: `${domTime.toFixed(2)}ms`,
-                calculation: `${calcTime.toFixed(2)}ms`,
-                result: result.toFixed(2)
-            });
-        }
 
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
@@ -1277,6 +1141,7 @@
                 setInterval(updateConnectionStatus, 5000);
                 debugLog('Connection monitoring started', 'info');
                 
+                validateInput();
                 debugLog('Application initialization completed', 'info');
             } catch (error) {
                 debugLog('Error during initialization', 'error', error);
@@ -1302,11 +1167,14 @@
         // 배경 애니메이션 생성
         function createFloatingShapes() {
             const container = document.querySelector('.floating-shapes');
+            if (!container) return;
+            
             for (let i = 0; i < 6; i++) {
                 const shape = document.createElement('div');
                 shape.className = 'shape';
-                shape.style.width = Math.random() * 100 + 20 + 'px';
-                shape.style.height = shape.style.width;
+                const size = Math.random() * 100 + 20 + 'px';
+                shape.style.width = size;
+                shape.style.height = size;
                 shape.style.left = Math.random() * 100 + '%';
                 shape.style.animationDelay = Math.random() * 20 + 's';
                 shape.style.animationDuration = (Math.random() * 10 + 15) + 's';
@@ -1323,10 +1191,12 @@
                 body.dataset.theme = 'light';
                 themeToggle.innerHTML = '🌙 다크 모드';
                 settings.theme = 'light';
+                debugLog('Theme changed to light', 'info');
             } else {
                 body.dataset.theme = 'dark';
                 themeToggle.innerHTML = '☀️ 라이트 모드';
                 settings.theme = 'dark';
+                debugLog('Theme changed to dark', 'info');
             }
             saveSettings();
         }
@@ -1335,6 +1205,8 @@
         function validateInput() {
             const input = document.getElementById('domainInput');
             const btn = document.getElementById('checkBtn');
+            
+            if (!input || !btn) return;
             
             const domains = input.value.trim().split('\n').filter(d => d.trim());
             
@@ -1353,18 +1225,23 @@
             selectedExtensions = Array.from(checkboxes)
                 .filter(cb => cb.checked)
                 .map(cb => cb.value);
+            debugLog('Extensions updated', 'info', selectedExtensions);
         }
 
         // 설정 업데이트
         function updateSettings() {
-            settings.autoRefresh = document.getElementById('autoRefresh').checked;
-            settings.soundNotification = document.getElementById('soundNotification').checked;
+            const autoRefresh = document.getElementById('autoRefresh');
+            const soundNotification = document.getElementById('soundNotification');
+            
+            if (autoRefresh) settings.autoRefresh = autoRefresh.checked;
+            if (soundNotification) settings.soundNotification = soundNotification.checked;
+            
             saveSettings();
+            debugLog('Settings updated', 'info', settings);
         }
 
         // 설정 저장/로드
         function saveSettings() {
-            // localStorage 대신 메모리에 저장
             window.domainCheckerSettings = settings;
         }
 
@@ -1372,12 +1249,16 @@
             const saved = window.domainCheckerSettings || settings;
             settings = { ...settings, ...saved };
             
-            document.getElementById('autoRefresh').checked = settings.autoRefresh;
-            document.getElementById('soundNotification').checked = settings.soundNotification;
+            const autoRefresh = document.getElementById('autoRefresh');
+            const soundNotification = document.getElementById('soundNotification');
+            const themeToggle = document.getElementById('themeToggle');
+            
+            if (autoRefresh) autoRefresh.checked = settings.autoRefresh;
+            if (soundNotification) soundNotification.checked = settings.soundNotification;
             
             if (settings.theme === 'dark') {
                 document.body.dataset.theme = 'dark';
-                document.getElementById('themeToggle').innerHTML = '☀️ 라이트 모드';
+                if (themeToggle) themeToggle.innerHTML = '☀️ 라이트 모드';
             }
         }
 
@@ -1399,6 +1280,12 @@
                 return;
             }
 
+            if (domains.length > 50) {
+                debugLog('Too many domains', 'warning');
+                alert('최대 50개까지만 검사할 수 있습니다');
+                return;
+            }
+
             isChecking = true;
             checkResults = [];
             performanceMetrics.apiCalls = 0;
@@ -1413,7 +1300,6 @@
             updateResultsContainer(true);
 
             try {
-                // 각 도메인에 대해 모든 확장자 검사
                 for (const domain of domains) {
                     const cleanDomain = domain.trim().replace(/^(https?:\/\/)?(www\.)?/, '').split('.')[0];
                     debugLog(`Processing domain: ${cleanDomain}`, 'info');
@@ -1424,18 +1310,14 @@
                         debugLog(`Checking ${fullDomain}`, 'info');
                         performanceMetrics.apiCalls++;
                         
-                        // 결과 추가 (검사 중 상태)
                         addResult(fullDomain, 'checking');
                         
-                        // 시뮬레이션 지연
-                        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+                        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 300));
                         
-                        // 랜덤 결과 생성 (실제로는 API 호출)
                         const isAvailable = Math.random() > 0.6;
                         
                         debugLog(`Result for ${fullDomain}: ${isAvailable ? 'available' : 'taken'}`, 'info');
                         
-                        // 결과 업데이트
                         updateResult(fullDomain, isAvailable ? 'available' : 'taken');
                     }
                 }
@@ -1456,70 +1338,15 @@
                 
                 debugLog('Domain check process finished', 'info');
                 
-                // 소리 알림
                 if (settings.soundNotification) {
                     debugLog('Playing notification sound', 'info');
                     playNotificationSound();
                 }
                 
-                // 자동 새로고침 설정
                 if (settings.autoRefresh) {
                     debugLog('Auto-refresh scheduled for 30 seconds', 'info');
                     setTimeout(checkDomains, 30000);
                 }
-            }
-        } document.getElementById('domainInput');
-            const domains = input.value.trim().split('\n').filter(d => d.trim());
-            
-            if (domains.length === 0) {
-                alert('도메인을 입력해주세요');
-                return;
-            }
-
-            isChecking = true;
-            checkResults = [];
-            
-            const btn = document.getElementById('checkBtn');
-            btn.disabled = true;
-            btn.innerHTML = '🔄 검사 중...';
-            
-            showLoadingOverlay();
-            updateResultsContainer(true);
-
-            // 각 도메인에 대해 모든 확장자 검사
-            for (const domain of domains) {
-                const cleanDomain = domain.trim().replace(/^(https?:\/\/)?(www\.)?/, '').split('.')[0];
-                
-                for (const ext of selectedExtensions) {
-                    const fullDomain = `${cleanDomain}.${ext}`;
-                    
-                    // 결과 추가 (검사 중 상태)
-                    addResult(fullDomain, 'checking');
-                    
-                    // 시뮬레이션 지연
-                    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
-                    
-                    // 랜덤 결과 생성 (실제로는 API 호출)
-                    const isAvailable = Math.random() > 0.6;
-                    
-                    // 결과 업데이트
-                    updateResult(fullDomain, isAvailable ? 'available' : 'taken');
-                }
-            }
-
-            hideLoadingOverlay();
-            isChecking = false;
-            btn.disabled = false;
-            btn.innerHTML = '🚀 다시 검사';
-            
-            // 소리 알림
-            if (settings.soundNotification) {
-                playNotificationSound();
-            }
-            
-            // 자동 새로고침 설정
-            if (settings.autoRefresh) {
-                setTimeout(checkDomains, 30000);
             }
         }
 
@@ -1533,7 +1360,7 @@
                     <div class="empty-state">
                         <div class="icon">${isChecking ? '🔄' : '🔍'}</div>
                         <h3>${isChecking ? '도메인 검사 중...' : '도메인을 입력하고 검사를 시작하세요'}</h3>
-                        <p>${isChecking ? '잠시만 기다려주세요' : '여러 도메인을 동시에 확인할 수 있습니다'}</p>
+                        <p>${isChecking ? '잠시만 기다려주세요' : '여러 도메인을 동시에 확인할 수 있습니다.<br>실시간으로 결과를 확인해보세요!'}</p>
                     </div>
                 `;
             } else {
@@ -1550,43 +1377,41 @@
             const checkingCount = checkResults.filter(r => r.status === 'checking').length;
             
             container.innerHTML = `
-                <div style="padding: 20px; border-bottom: 2px solid var(--border); background: linear-gradient(135deg, #f8fafc, #e2e8f0);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 style="margin: 0; color: var(--text-primary);">🎯 검사 결과</h3>
-                        <div style="display: flex; gap: 12px; font-size: 0.85rem;">
-                            <span style="color: var(--success); font-weight: 600;">✅ 사용 가능: ${availableCount}</span>
-                            <span style="color: var(--error); font-weight: 600;">❌ 사용 중: ${takenCount}</span>
-                            ${checkingCount > 0 ? `<span style="color: var(--primary); font-weight: 600;">🔄 검사 중: ${checkingCount}</span>` : ''}
+                <div class="results-header">
+                    <div class="results-stats">
+                        <h3 class="results-title">🎯 검사 결과</h3>
+                        <div class="stats-badges">
+                            <div class="stat-badge available">✅ 사용 가능: ${availableCount}</div>
+                            <div class="stat-badge taken">❌ 사용 중: ${takenCount}</div>
+                            ${checkingCount > 0 ? `<div class="stat-badge checking">🔄 검사 중: ${checkingCount}</div>` : ''}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="exportResults()" style="padding: 6px 12px; font-size: 0.8rem;">
+                    <div class="results-controls">
+                        <button class="results-btn export" onclick="exportResults()">
                             📊 결과 내보내기
                         </button>
-                        <button class="btn" onclick="filterResults('available')" style="padding: 6px 12px; font-size: 0.8rem; background: var(--success); color: white;">
+                        <button class="results-btn filter" onclick="filterResults('available')">
                             사용 가능만 보기
                         </button>
-                        <button class="btn" onclick="filterResults('all')" style="padding: 6px 12px; font-size: 0.8rem; background: var(--info); color: white;">
+                        <button class="results-btn show-all" onclick="filterResults('all')">
                             전체 보기
                         </button>
                     </div>
                 </div>
-                <div style="max-height: 400px; overflow-y: auto;">
+                <div class="results-list">
                     ${checkResults.map(result => `
                         <div class="domain-result ${result.status === 'checking' ? 'checking' : ''}">
                             <div class="domain-info">
-                                <span class="domain-name">${result.domain}</span>
-                                <small style="color: var(--text-secondary); font-size: 0.75rem;">
-                                    ${new Date(result.timestamp).toLocaleTimeString()}
-                                </small>
+                                <div class="domain-name">${result.domain}</div>
+                                <div class="domain-time">${new Date(result.timestamp).toLocaleTimeString()}</div>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="result-actions">
                                 <span class="status-badge ${result.status}">
                                     ${getStatusIcon(result.status)} ${getStatusText(result.status)}
                                 </span>
                                 ${result.status === 'available' ? `
-                                    <button onclick="openRegistrar('${result.domain}')" style="padding: 4px 8px; background: var(--success); color: white; border: none; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">
-                                        등록
+                                    <button class="register-btn" onclick="openRegistrar('${result.domain}')">
+                                        등록하기
                                     </button>
                                 ` : ''}
                             </div>
@@ -1679,6 +1504,8 @@
             link.href = URL.createObjectURL(blob);
             link.download = `domain-check-results-${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
+            
+            debugLog('Results exported to CSV', 'info');
         }
 
         // 도메인 등록 사이트로 이동
@@ -1691,18 +1518,21 @@
             
             const randomRegistrar = registrars[Math.floor(Math.random() * registrars.length)];
             window.open(randomRegistrar, '_blank');
+            debugLog(`Opened registrar for ${domain}`, 'info');
         }
 
         // 로딩 오버레이 표시/숨김
         function showLoadingOverlay() {
-            document.getElementById('loadingOverlay').classList.add('show');
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.add('show');
         }
 
         function hideLoadingOverlay() {
-            document.getElementById('loadingOverlay').classList.remove('show');
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.remove('show');
         }
 
-        // 알림음 재생 (Web Audio API 사용)
+        // 알림음 재생
         function playNotificationSound() {
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1721,7 +1551,7 @@
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.5);
             } catch (error) {
-                console.log('알림음 재생 실패:', error);
+                debugLog('Failed to play notification sound', 'warning', error);
             }
         }
 
@@ -1736,13 +1566,267 @@
                 if (!confirm('모든 결과를 삭제하시겠습니까?')) return;
             }
             
-            document.getElementById('domainInput').value = '';
+            const input = document.getElementById('domainInput');
+            if (input) input.value = '';
+            
             checkResults = [];
             updateResultsContainer();
             
             const btn = document.getElementById('checkBtn');
-            btn.disabled = true;
-            btn.innerHTML = '🚀 도메인 검사 시작';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '🚀 도메인 검사 시작';
+            }
+            
+            debugLog('All data cleared', 'info');
+        }
+
+        // 디버그 패널 토글
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            const toggle = document.getElementById('debugToggle');
+            
+            if (!panel || !toggle) return;
+            
+            debugEnabled = !debugEnabled;
+            
+            if (debugEnabled) {
+                panel.classList.add('show');
+                toggle.classList.add('active');
+                toggle.innerHTML = '🐛 디버그 ON';
+                
+                debugLog('Debug panel opened', 'info');
+                startDebugMonitoring();
+                updateDebugPanel();
+            } else {
+                panel.classList.remove('show');
+                toggle.classList.remove('active');
+                toggle.innerHTML = '🐛 디버그';
+                
+                stopDebugMonitoring();
+                debugLog('Debug panel closed', 'info');
+            }
+        }
+
+        // 디버그 모니터링 시작/중지
+        function startDebugMonitoring() {
+            debugUpdateInterval = setInterval(() => {
+                if (debugEnabled) {
+                    updateDebugPanel();
+                }
+            }, 1000);
+        }
+
+        function stopDebugMonitoring() {
+            if (debugUpdateInterval) {
+                clearInterval(debugUpdateInterval);
+                debugUpdateInterval = null;
+            }
+        }
+
+        // 디버그 패널 업데이트
+        function updateDebugPanel() {
+            if (!debugEnabled) return;
+            
+            updateSystemInfo();
+            updateVariableMonitor();
+            updateNetworkInfo();
+            updateDebugLogs();
+            updateDebugTime();
+        }
+
+        // 시스템 정보 업데이트
+        function updateSystemInfo() {
+            const systemInfo = document.getElementById('systemInfo');
+            if (!systemInfo) return;
+            
+            systemInfo.innerHTML = `
+                <div style="color: #00ffff; font-weight: bold;">User Agent:</div>
+                <div style="color: #ffffff; margin: 5px 0; font-size: 10px;">${navigator.userAgent}</div>
+                <div style="color: #00ffff; font-weight: bold;">Screen: <span style="color: #ffffff;">${screen.width}x${screen.height}</span></div>
+                <div style="color: #00ffff; font-weight: bold;">Viewport: <span style="color: #ffffff;">${window.innerWidth}x${window.innerHeight}</span></div>
+                <div style="color: #00ffff; font-weight: bold;">Language: <span style="color: #ffffff;">${navigator.language}</span></div>
+                <div style="color: #00ffff; font-weight: bold;">Online: <span style="color: #ffffff;">${navigator.onLine ? 'Yes' : 'No'}</span></div>
+            `;
+        }
+
+        // 변수 모니터 업데이트
+        function updateVariableMonitor() {
+            const monitor = document.getElementById('variableMonitor');
+            if (!monitor) return;
+            
+            monitor.innerHTML = `
+                <div style="color: #00ffff; font-weight: bold;">selectedExtensions: <span style="color: #ffffff;">[${selectedExtensions.join(', ')}]</span></div>
+                <div style="color: #00ffff; font-weight: bold;">isChecking: <span style="color: #ffffff;">${isChecking}</span></div>
+                <div style="color: #00ffff; font-weight: bold;">checkResults.length: <span style="color: #ffffff;">${checkResults.length}</span></div>
+                <div style="color: #00ffff; font-weight: bold;">debugLogs.length: <span style="color: #ffffff;">${debugLogs.length}</span></div>
+                <div style="color: #00ffff; font-weight: bold;">Performance:</span></div>
+                <div style="color: #ffffff; margin-left: 10px; font-size: 11px;">
+                    Errors: ${performanceMetrics.errors}, 
+                    Warnings: ${performanceMetrics.warnings}, 
+                    API Calls: ${performanceMetrics.apiCalls}
+                </div>
+            `;
+        }
+
+        // 네트워크 정보 업데이트
+        function updateNetworkInfo() {
+            const status = document.getElementById('networkStatus');
+            const speed = document.getElementById('networkSpeed');
+            const type = document.getElementById('networkType');
+            
+            if (status) {
+                status.textContent = navigator.onLine ? 'Online' : 'Offline';
+                status.style.color = navigator.onLine ? '#00ff00' : '#ff6b6b';
+            }
+            
+            if (navigator.connection) {
+                if (speed) speed.textContent = navigator.connection.downlink + ' Mbps';
+                if (type) type.textContent = navigator.connection.effectiveType || 'Unknown';
+            } else {
+                if (speed) speed.textContent = 'Unknown';
+                if (type) type.textContent = 'Unknown';
+            }
+        }
+
+        // 디버그 로그 업데이트
+        function updateDebugLogs() {
+            const logElement = document.getElementById('debugLog');
+            if (!logElement) return;
+            
+            const recentLogs = debugLogs.slice(-20);
+            
+            logElement.innerHTML = recentLogs.map(log => {
+                const time = new Date(log.timestamp).toLocaleTimeString();
+                let color = '#00ff00';
+                if (log.type === 'error') color = '#ff6b6b';
+                else if (log.type === 'warning') color = '#ffa500';
+                else if (log.type === 'info') color = '#00bfff';
+                
+                return `<div style="color: ${color}; margin: 2px 0;">[${time}] ${log.message}${log.data ? '\n' + log.data : ''}</div>`;
+            }).join('');
+            
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // 디버그 시간 업데이트
+        function updateDebugTime() {
+            const timeElement = document.getElementById('debugTime');
+            if (timeElement) {
+                timeElement.textContent = new Date().toLocaleTimeString();
+            }
+        }
+
+        // 디버그 테스트 함수들
+        function debugTest() {
+            debugLog('Testing all major functions...', 'info');
+            
+            try {
+                const originalValue = document.getElementById('domainInput').value;
+                document.getElementById('domainInput').value = 'test.com\nexample.org';
+                validateInput();
+                document.getElementById('domainInput').value = originalValue;
+                debugLog('Input validation test passed', 'info');
+                
+                const originalSettings = {...settings};
+                updateSettings();
+                settings = originalSettings;
+                debugLog('Settings test passed', 'info');
+                
+                debugLog('All tests completed successfully', 'info');
+            } catch (error) {
+                debugLog('Test failed', 'error', error);
+            }
+        }
+
+        function debugClearLogs() {
+            debugLogs = [];
+            performanceMetrics.errors = 0;
+            performanceMetrics.warnings = 0;
+            performanceMetrics.apiCalls = 0;
+            updateDebugPanel();
+            debugLog('Debug logs cleared', 'info');
+        }
+
+        function debugExportLogs() {
+            const logData = {
+                timestamp: new Date().toISOString(),
+                logs: debugLogs,
+                metrics: performanceMetrics,
+                systemInfo: {
+                    userAgent: navigator.userAgent,
+                    screen: `${screen.width}x${screen.height}`,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    language: navigator.language,
+                    online: navigator.onLine
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `debug-log-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            debugLog('Debug logs exported', 'info');
+        }
+
+        function debugSimulateError() {
+            debugLog('Simulating error for testing...', 'warning');
+            
+            setTimeout(() => {
+                try {
+                    throw new Error('This is a simulated error for testing purposes');
+                } catch (error) {
+                    debugLog('Simulated error caught', 'error', error);
+                }
+            }, 100);
+        }
+
+        function debugMemoryTest() {
+            debugLog('Starting memory stress test...', 'info');
+            
+            const testArray = [];
+            for (let i = 0; i < 10000; i++) {
+                testArray.push({ id: i, data: 'test data '.repeat(10) });
+            }
+            
+            debugLog(`Created array with ${testArray.length} items`, 'info');
+            
+            setTimeout(() => {
+                testArray.length = 0;
+                debugLog('Memory test completed, array cleared', 'info');
+            }, 2000);
+        }
+
+        function debugPerformanceTest() {
+            debugLog('Starting performance test...', 'info');
+            
+            const start = performance.now();
+            
+            const testDiv = document.createElement('div');
+            for (let i = 0; i < 1000; i++) {
+                const span = document.createElement('span');
+                span.textContent = `Test ${i}`;
+                testDiv.appendChild(span);
+            }
+            
+            const domTime = performance.now() - start;
+            
+            const calcStart = performance.now();
+            let result = 0;
+            for (let i = 0; i < 100000; i++) {
+                result += Math.sqrt(i);
+            }
+            const calcTime = performance.now() - calcStart;
+            
+            debugLog('Performance test completed', 'info', {
+                domManipulation: `${domTime.toFixed(2)}ms`,
+                calculation: `${calcTime.toFixed(2)}ms`,
+                result: result.toFixed(2)
+            });
         }
 
         // 키보드 단축키
@@ -1760,7 +1844,8 @@
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
                 debugLog('Keyboard shortcut: Focus input', 'info');
-                document.getElementById('domainInput').focus();
+                const input = document.getElementById('domainInput');
+                if (input) input.focus();
             }
             
             // Ctrl/Cmd + D: 다크모드 토글
@@ -1783,7 +1868,7 @@
                 clearAll();
             }
             
-            // F12: 디버그 패널 토글 (개발자 도구와 함께)
+            // F12: 디버그 패널 토글
             if (e.key === 'F12') {
                 debugLog('F12 pressed: Toggle debug panel', 'info');
                 setTimeout(() => toggleDebugPanel(), 100);
@@ -1791,14 +1876,22 @@
         });
 
         // 온라인/오프라인 이벤트 리스너
-        window.addEventListener('online', updateConnectionStatus);
-        window.addEventListener('offline', updateConnectionStatus);
+        window.addEventListener('online', function() {
+            debugLog('Connection restored', 'info');
+            updateConnectionStatus();
+        });
+
+        window.addEventListener('offline', function() {
+            debugLog('Connection lost', 'warning');
+            updateConnectionStatus();
+        });
 
         // 페이지 언로드 시 진행 중인 작업 확인
         window.addEventListener('beforeunload', function(e) {
             if (isChecking) {
                 e.preventDefault();
                 e.returnValue = '도메인 검사가 진행 중입니다. 페이지를 떠나시겠습니까?';
+                debugLog('User attempted to leave during check', 'warning');
             }
         });
 
@@ -1818,25 +1911,55 @@
 
         // 성능 최적화: 디바운스된 입력 검증
         let inputTimeout;
-        document.getElementById('domainInput').addEventListener('input', function() {
-            clearTimeout(inputTimeout);
-            inputTimeout = setTimeout(validateInput, 300);
-        });
+        const domainInput = document.getElementById('domainInput');
+        if (domainInput) {
+            domainInput.addEventListener('input', function() {
+                clearTimeout(inputTimeout);
+                inputTimeout = setTimeout(validateInput, 300);
+            });
+        }
 
-        // 초기 상태 설정
-        validateInput();
+        // CSS 클래스 추가 - 디버그 관련
+        const style = document.createElement('style');
+        style.textContent = `
+            .debug-btn {
+                background: rgba(0, 255, 0, 0.1);
+                border: 1px solid #00ff00;
+                color: #00ff00;
+                padding: 8px 12px;
+                cursor: pointer;
+                border-radius: 3px;
+                font-size: 11px;
+                transition: var(--transition);
+            }
+            
+            .debug-btn:hover {
+                background: rgba(0, 255, 0, 0.2);
+            }
+            
+            .debug-btn:active {
+                background: rgba(0, 255, 0, 0.3);
+            }
+            
+            .performance-meter {
+                width: 100%;
+                height: 20px;
+                background: rgba(0, 0, 0, 0.5);
+                border-radius: 10px;
+                overflow: hidden;
+                margin: 5px 0;
+            }
+            
+            .performance-bar {
+                height: 100%;
+                background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+                width: 0%;
+                transition: width 0.3s ease;
+            }
+        `;
+        document.head.appendChild(style);
+
+        debugLog('Domain Checker Pro initialized successfully', 'info');
     </script>
-
-    <!-- 키보드 단축키 도움말 -->
-    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.7rem; z-index: 1000; opacity: 0.7; transition: opacity 0.3s;" 
-         onmouseenter="this.style.opacity='1'" 
-         onmouseleave="this.style.opacity='0.7'">
-        <div>💡 단축키</div>
-        <div>Ctrl+Enter: 검사</div>
-        <div>Ctrl+K: 입력창</div>
-        <div>Ctrl+D: 다크모드</div>
-        <div>Ctrl+`: 디버그</div>
-        <div>Esc: 초기화</div>
-    </div>
 </body>
 </html>
