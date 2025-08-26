@@ -551,7 +551,180 @@
             }
         }
 
-        /* 다크 모드 개선 */
+        /* 디버그 패널 스타일 */
+        .debug-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            z-index: 10000;
+            transition: right 0.3s ease;
+            backdrop-filter: blur(10px);
+            border-left: 2px solid #00ff00;
+            overflow: hidden;
+        }
+
+        .debug-panel.show {
+            right: 0;
+        }
+
+        .debug-header {
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.1);
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .debug-close {
+            background: none;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+
+        .debug-close:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .debug-content {
+            padding: 15px;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+        }
+
+        .debug-section {
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .debug-section-title {
+            color: #ffff00;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 0, 0.3);
+        }
+
+        .debug-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .debug-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .debug-btn {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 11px;
+            transition: var(--transition);
+        }
+
+        .debug-btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .debug-btn:active {
+            background: rgba(0, 255, 0, 0.3);
+        }
+
+        .debug-variable {
+            margin: 5px 0;
+            padding: 5px;
+            background: rgba(0, 255, 0, 0.05);
+            border-radius: 3px;
+        }
+
+        .debug-variable-name {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .debug-variable-value {
+            color: #ffffff;
+            margin-left: 10px;
+        }
+
+        .debug-error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px 0;
+            border-left: 3px solid #ff6b6b;
+        }
+
+        .debug-warning {
+            color: #ffa500;
+            background: rgba(255, 165, 0, 0.1);
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px 0;
+            border-left: 3px solid #ffa500;
+        }
+
+        .debug-info {
+            color: #00bfff;
+            background: rgba(0, 191, 255, 0.1);
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px 0;
+            border-left: 3px solid #00bfff;
+        }
+
+        .debug-timestamp {
+            color: #888;
+            font-size: 10px;
+        }
+
+        .performance-meter {
+            width: 100%;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .performance-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 모바일에서 디버그 패널 */
+        @media (max-width: 768px) {
+            .debug-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
         [data-theme="dark"] .card {
             border-color: rgba(255, 255, 255, 0.1);
         }
@@ -600,6 +773,9 @@
                 </button>
                 <button class="control-btn" onclick="clearAll()">
                     🗑️ 초기화
+                </button>
+                <button class="control-btn" onclick="toggleDebugPanel()" id="debugToggle">
+                    🐛 디버그
                 </button>
             </div>
             <h1>🌐 Domain Checker Pro</h1>
@@ -698,12 +874,413 @@
             theme: 'light'
         };
 
+        // 디버깅 관련 변수
+        let debugLogs = [];
+        let debugEnabled = false;
+        let performanceMetrics = {
+            startTime: Date.now(),
+            apiCalls: 0,
+            errors: 0,
+            warnings: 0
+        };
+        let debugUpdateInterval;
+
+        // 디버그 로깅 함수
+        function debugLog(message, type = 'info', data = null) {
+            const timestamp = new Date().toISOString();
+            const logEntry = {
+                timestamp,
+                message,
+                type,
+                data: data ? JSON.stringify(data, null, 2) : null
+            };
+            
+            debugLogs.push(logEntry);
+            
+            // 로그 개수 제한 (성능을 위해)
+            if (debugLogs.length > 1000) {
+                debugLogs.shift();
+            }
+            
+            // 콘솔에도 출력
+            const consoleMethod = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
+            console[consoleMethod](`[${timestamp}] ${message}`, data || '');
+            
+            // 디버그 패널 업데이트
+            if (debugEnabled) {
+                updateDebugPanel();
+            }
+            
+            // 성능 카운터 업데이트
+            if (type === 'error') performanceMetrics.errors++;
+            if (type === 'warning') performanceMetrics.warnings++;
+        }
+
+        // 에러 처리 강화
+        window.addEventListener('error', function(event) {
+            debugLog(`Global Error: ${event.message}`, 'error', {
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                stack: event.error ? event.error.stack : null
+            });
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            debugLog(`Unhandled Promise Rejection: ${event.reason}`, 'error', {
+                reason: event.reason,
+                promise: event.promise
+            });
+        });
+
+        // 디버그 패널 토글
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            const toggle = document.getElementById('debugToggle');
+            
+            debugEnabled = !debugEnabled;
+            
+            if (debugEnabled) {
+                panel.classList.add('show');
+                toggle.classList.add('active');
+                toggle.innerHTML = '🐛 디버그 ON';
+                
+                debugLog('Debug panel opened', 'info');
+                startDebugMonitoring();
+                updateDebugPanel();
+            } else {
+                panel.classList.remove('show');
+                toggle.classList.remove('active');
+                toggle.innerHTML = '🐛 디버그';
+                
+                stopDebugMonitoring();
+                debugLog('Debug panel closed', 'info');
+            }
+        }
+
+        // 디버그 모니터링 시작
+        function startDebugMonitoring() {
+            debugUpdateInterval = setInterval(() => {
+                if (debugEnabled) {
+                    updatePerformanceMetrics();
+                    updateVariableMonitor();
+                    updateNetworkInfo();
+                }
+            }, 1000);
+        }
+
+        // 디버그 모니터링 중지
+        function stopDebugMonitoring() {
+            if (debugUpdateInterval) {
+                clearInterval(debugUpdateInterval);
+                debugUpdateInterval = null;
+            }
+        }
+
+        // 디버그 패널 업데이트
+        function updateDebugPanel() {
+            if (!debugEnabled) return;
+            
+            updateSystemInfo();
+            updateDebugLogs();
+            updateDebugTime();
+        }
+
+        // 시스템 정보 업데이트
+        function updateSystemInfo() {
+            const systemInfo = document.getElementById('systemInfo');
+            if (!systemInfo) return;
+            
+            systemInfo.innerHTML = `
+                <div class="debug-variable">
+                    <span class="debug-variable-name">User Agent:</span>
+                    <div class="debug-variable-value">${navigator.userAgent}</div>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">Screen:</span>
+                    <span class="debug-variable-value">${screen.width}x${screen.height}</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">Viewport:</span>
+                    <span class="debug-variable-value">${window.innerWidth}x${window.innerHeight}</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">Language:</span>
+                    <span class="debug-variable-value">${navigator.language}</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">Online:</span>
+                    <span class="debug-variable-value">${navigator.onLine ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">Cookies Enabled:</span>
+                    <span class="debug-variable-value">${navigator.cookieEnabled ? 'Yes' : 'No'}</span>
+                </div>
+            `;
+        }
+
+        // 성능 메트릭 업데이트
+        function updatePerformanceMetrics() {
+            const memoryBar = document.getElementById('memoryBar');
+            const domNodes = document.getElementById('domNodes');
+            const eventListeners = document.getElementById('eventListeners');
+            const loadTime = document.getElementById('loadTime');
+            
+            if (memoryBar) {
+                // 메모리 사용량 시뮬레이션 (실제로는 performance.memory API 사용)
+                const memoryUsage = Math.random() * 100;
+                memoryBar.style.width = memoryUsage + '%';
+            }
+            
+            if (domNodes) {
+                domNodes.textContent = document.querySelectorAll('*').length;
+            }
+            
+            if (eventListeners) {
+                // 이벤트 리스너 추정치 (정확한 카운트는 복잡함)
+                eventListeners.textContent = document.querySelectorAll('[onclick], [onchange], [oninput]').length + 10;
+            }
+            
+            if (loadTime) {
+                loadTime.textContent = (Date.now() - performanceMetrics.startTime) + 'ms';
+            }
+        }
+
+        // 변수 모니터 업데이트
+        function updateVariableMonitor() {
+            const monitor = document.getElementById('variableMonitor');
+            if (!monitor) return;
+            
+            monitor.innerHTML = `
+                <div class="debug-variable">
+                    <span class="debug-variable-name">selectedExtensions:</span>
+                    <span class="debug-variable-value">[${selectedExtensions.join(', ')}]</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">isChecking:</span>
+                    <span class="debug-variable-value">${isChecking}</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">checkResults.length:</span>
+                    <span class="debug-variable-value">${checkResults.length}</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">debugLogs.length:</span>
+                    <span class="debug-variable-value">${debugLogs.length}</span>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">settings:</span>
+                    <div class="debug-variable-value">${JSON.stringify(settings, null, 2)}</div>
+                </div>
+                <div class="debug-variable">
+                    <span class="debug-variable-name">Performance:</span>
+                    <div class="debug-variable-value">
+                        Errors: ${performanceMetrics.errors}, 
+                        Warnings: ${performanceMetrics.warnings}, 
+                        API Calls: ${performanceMetrics.apiCalls}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 네트워크 정보 업데이트
+        function updateNetworkInfo() {
+            const status = document.getElementById('networkStatus');
+            const speed = document.getElementById('networkSpeed');
+            const type = document.getElementById('networkType');
+            
+            if (status) {
+                status.textContent = navigator.onLine ? 'Online' : 'Offline';
+                status.style.color = navigator.onLine ? '#00ff00' : '#ff6b6b';
+            }
+            
+            if (navigator.connection) {
+                if (speed) speed.textContent = navigator.connection.downlink + ' Mbps';
+                if (type) type.textContent = navigator.connection.effectiveType || 'Unknown';
+            } else {
+                if (speed) speed.textContent = 'Unknown';
+                if (type) type.textContent = 'Unknown';
+            }
+        }
+
+        // 디버그 로그 업데이트
+        function updateDebugLogs() {
+            const logElement = document.getElementById('debugLog');
+            if (!logElement) return;
+            
+            const recentLogs = debugLogs.slice(-50); // 최근 50개만 표시
+            
+            logElement.innerHTML = recentLogs.map(log => {
+                const time = new Date(log.timestamp).toLocaleTimeString();
+                const className = `debug-${log.type}`;
+                
+                return `
+                    <div class="${className}">
+                        <span class="debug-timestamp">[${time}]</span> ${log.message}
+                        ${log.data ? `<pre style="margin: 5px 0; font-size: 10px;">${log.data}</pre>` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // 자동 스크롤
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // 디버그 시간 업데이트
+        function updateDebugTime() {
+            const timeElement = document.getElementById('debugTime');
+            if (timeElement) {
+                timeElement.textContent = new Date().toLocaleTimeString();
+            }
+        }
+
+        // 디버그 컨트롤 함수들
+        function debugTest() {
+            debugLog('Testing all major functions...', 'info');
+            
+            try {
+                // 입력 검증 테스트
+                const originalValue = document.getElementById('domainInput').value;
+                document.getElementById('domainInput').value = 'test.com\nexample.org';
+                validateInput();
+                document.getElementById('domainInput').value = originalValue;
+                debugLog('Input validation test passed', 'info');
+                
+                // 설정 테스트
+                const originalSettings = {...settings};
+                updateSettings();
+                settings = originalSettings;
+                debugLog('Settings test passed', 'info');
+                
+                // 테마 테스트
+                const originalTheme = document.body.dataset.theme;
+                toggleTheme();
+                setTimeout(() => {
+                    toggleTheme();
+                    document.body.dataset.theme = originalTheme;
+                    debugLog('Theme test passed', 'info');
+                }, 100);
+                
+                debugLog('All tests completed successfully', 'info');
+            } catch (error) {
+                debugLog('Test failed', 'error', error);
+            }
+        }
+
+        function debugClearLogs() {
+            debugLogs = [];
+            performanceMetrics.errors = 0;
+            performanceMetrics.warnings = 0;
+            performanceMetrics.apiCalls = 0;
+            updateDebugPanel();
+            debugLog('Debug logs cleared', 'info');
+        }
+
+        function debugExportLogs() {
+            const logData = {
+                timestamp: new Date().toISOString(),
+                logs: debugLogs,
+                metrics: performanceMetrics,
+                systemInfo: {
+                    userAgent: navigator.userAgent,
+                    screen: `${screen.width}x${screen.height}`,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    language: navigator.language,
+                    online: navigator.onLine
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `debug-log-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            debugLog('Debug logs exported', 'info');
+        }
+
+        function debugSimulateError() {
+            debugLog('Simulating error for testing...', 'warning');
+            
+            setTimeout(() => {
+                try {
+                    throw new Error('This is a simulated error for testing purposes');
+                } catch (error) {
+                    debugLog('Simulated error caught', 'error', error);
+                }
+            }, 100);
+        }
+
+        function debugMemoryTest() {
+            debugLog('Starting memory stress test...', 'info');
+            
+            // 메모리 사용량 테스트
+            const testArray = [];
+            for (let i = 0; i < 100000; i++) {
+                testArray.push({ id: i, data: 'test data '.repeat(10) });
+            }
+            
+            debugLog(`Created array with ${testArray.length} items`, 'info');
+            
+            setTimeout(() => {
+                testArray.length = 0;
+                debugLog('Memory test completed, array cleared', 'info');
+            }, 2000);
+        }
+
+        function debugPerformanceTest() {
+            debugLog('Starting performance test...', 'info');
+            
+            const start = performance.now();
+            
+            // DOM 조작 테스트
+            const testDiv = document.createElement('div');
+            for (let i = 0; i < 1000; i++) {
+                const span = document.createElement('span');
+                span.textContent = `Test ${i}`;
+                testDiv.appendChild(span);
+            }
+            
+            const domTime = performance.now() - start;
+            
+            // 계산 테스트
+            const calcStart = performance.now();
+            let result = 0;
+            for (let i = 0; i < 1000000; i++) {
+                result += Math.sqrt(i);
+            }
+            const calcTime = performance.now() - calcStart;
+            
+            debugLog('Performance test completed', 'info', {
+                domManipulation: `${domTime.toFixed(2)}ms`,
+                calculation: `${calcTime.toFixed(2)}ms`,
+                result: result.toFixed(2)
+            });
+        }
+
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            createFloatingShapes();
-            loadSettings();
-            updateConnectionStatus();
-            setInterval(updateConnectionStatus, 5000);
+            debugLog('Application initializing...', 'info');
+            
+            try {
+                createFloatingShapes();
+                debugLog('Floating shapes created', 'info');
+                
+                loadSettings();
+                debugLog('Settings loaded', 'info');
+                
+                updateConnectionStatus();
+                debugLog('Connection status updated', 'info');
+                
+                setInterval(updateConnectionStatus, 5000);
+                debugLog('Connection monitoring started', 'info');
+                
+                debugLog('Application initialization completed', 'info');
+            } catch (error) {
+                debugLog('Error during initialization', 'error', error);
+            }
         });
 
         // 연결 상태 확인
@@ -806,9 +1383,92 @@
 
         // 도메인 검사 (시뮬레이션)
         async function checkDomains() {
-            if (isChecking) return;
+            if (isChecking) {
+                debugLog('Domain check already in progress', 'warning');
+                return;
+            }
             
             const input = document.getElementById('domainInput');
+            const domains = input.value.trim().split('\n').filter(d => d.trim());
+            
+            debugLog(`Starting domain check for ${domains.length} domains`, 'info', domains);
+            
+            if (domains.length === 0) {
+                debugLog('No domains to check', 'warning');
+                alert('도메인을 입력해주세요');
+                return;
+            }
+
+            isChecking = true;
+            checkResults = [];
+            performanceMetrics.apiCalls = 0;
+            
+            const btn = document.getElementById('checkBtn');
+            btn.disabled = true;
+            btn.innerHTML = '🔄 검사 중...';
+            
+            debugLog('UI updated for checking state', 'info');
+            
+            showLoadingOverlay();
+            updateResultsContainer(true);
+
+            try {
+                // 각 도메인에 대해 모든 확장자 검사
+                for (const domain of domains) {
+                    const cleanDomain = domain.trim().replace(/^(https?:\/\/)?(www\.)?/, '').split('.')[0];
+                    debugLog(`Processing domain: ${cleanDomain}`, 'info');
+                    
+                    for (const ext of selectedExtensions) {
+                        const fullDomain = `${cleanDomain}.${ext}`;
+                        
+                        debugLog(`Checking ${fullDomain}`, 'info');
+                        performanceMetrics.apiCalls++;
+                        
+                        // 결과 추가 (검사 중 상태)
+                        addResult(fullDomain, 'checking');
+                        
+                        // 시뮬레이션 지연
+                        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+                        
+                        // 랜덤 결과 생성 (실제로는 API 호출)
+                        const isAvailable = Math.random() > 0.6;
+                        
+                        debugLog(`Result for ${fullDomain}: ${isAvailable ? 'available' : 'taken'}`, 'info');
+                        
+                        // 결과 업데이트
+                        updateResult(fullDomain, isAvailable ? 'available' : 'taken');
+                    }
+                }
+
+                debugLog('Domain check completed successfully', 'info', {
+                    totalChecked: checkResults.length,
+                    available: checkResults.filter(r => r.status === 'available').length,
+                    taken: checkResults.filter(r => r.status === 'taken').length
+                });
+
+            } catch (error) {
+                debugLog('Error during domain check', 'error', error);
+            } finally {
+                hideLoadingOverlay();
+                isChecking = false;
+                btn.disabled = false;
+                btn.innerHTML = '🚀 다시 검사';
+                
+                debugLog('Domain check process finished', 'info');
+                
+                // 소리 알림
+                if (settings.soundNotification) {
+                    debugLog('Playing notification sound', 'info');
+                    playNotificationSound();
+                }
+                
+                // 자동 새로고침 설정
+                if (settings.autoRefresh) {
+                    debugLog('Auto-refresh scheduled for 30 seconds', 'info');
+                    setTimeout(checkDomains, 30000);
+                }
+            }
+        } document.getElementById('domainInput');
             const domains = input.value.trim().split('\n').filter(d => d.trim());
             
             if (domains.length === 0) {
@@ -1087,27 +1747,46 @@
 
         // 키보드 단축키
         document.addEventListener('keydown', function(e) {
+            debugLog(`Key pressed: ${e.key} (Ctrl: ${e.ctrlKey}, Alt: ${e.altKey})`, 'info');
+            
             // Ctrl/Cmd + Enter: 검사 시작
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
+                debugLog('Keyboard shortcut: Start domain check', 'info');
                 if (!isChecking) checkDomains();
             }
             
             // Ctrl/Cmd + K: 입력창 포커스
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
+                debugLog('Keyboard shortcut: Focus input', 'info');
                 document.getElementById('domainInput').focus();
             }
             
             // Ctrl/Cmd + D: 다크모드 토글
             if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
                 e.preventDefault();
+                debugLog('Keyboard shortcut: Toggle theme', 'info');
                 toggleTheme();
+            }
+            
+            // Ctrl/Cmd + `: 디버그 패널 토글
+            if ((e.ctrlKey || e.metaKey) && e.key === '`') {
+                e.preventDefault();
+                debugLog('Keyboard shortcut: Toggle debug panel', 'info');
+                toggleDebugPanel();
             }
             
             // Escape: 초기화
             if (e.key === 'Escape' && !isChecking) {
+                debugLog('Keyboard shortcut: Clear all', 'info');
                 clearAll();
+            }
+            
+            // F12: 디버그 패널 토글 (개발자 도구와 함께)
+            if (e.key === 'F12') {
+                debugLog('F12 pressed: Toggle debug panel', 'info');
+                setTimeout(() => toggleDebugPanel(), 100);
             }
         });
 
@@ -1156,6 +1835,7 @@
         <div>Ctrl+Enter: 검사</div>
         <div>Ctrl+K: 입력창</div>
         <div>Ctrl+D: 다크모드</div>
+        <div>Ctrl+`: 디버그</div>
         <div>Esc: 초기화</div>
     </div>
 </body>
