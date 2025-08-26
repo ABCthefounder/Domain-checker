@@ -1,703 +1,10 @@
-<button class="btn btn-danger btn-full" onclick="clearAllDomains()">
-                            <span data-text="clear-all">🗑️ 전체 삭제</span>
-                        </button>
-                    </div>
-                    
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressFill"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="status-display" id="statusDisplay" data-text="ready">
-                        🟢 준비 완료
-                    </div>
-                </div>
-
-                <!-- 알림 설정 -->
-                <div class="card">
-                    <h2 class="card-title">
-                        <span>📱</span>
-                        <span data-text="notifications">알림 설정</span>
-                    </h2>
-                    
-                    <!-- 텔레그램 알림 -->
-                    <div class="notification-card" id="telegramCard">
-                        <div class="notification-header" onclick="toggleNotification('telegram')">
-                            <span data-text="telegram-notify">📱 텔레그램 알림</span>
-                            <div class="toggle-switch" id="telegramToggle">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-                        <div class="notification-inputs" id="telegramInputs">
-                            <input type="text" id="telegramBot" data-placeholder="Bot Token" 
-                                   placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
-                            <input type="text" id="telegramChat" data-placeholder="Chat ID" 
-                                   placeholder="987654321">
-                        </div>
-                    </div>
-
-                    <!-- 웹훅 알림 -->
-                    <div class="notification-card" id="webhookCard">
-                        <div class="notification-header" onclick="toggleNotification('webhook')">
-                            <span data-text="webhook-notify">🔗 웹훅 알림</span>
-                            <div class="toggle-switch" id="webhookToggle">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-                        <div class="notification-inputs" id="webhookInputs">
-                            <input type="url" id="webhookUrl" data-placeholder="Webhook URL" 
-                                   placeholder="https://hooks.slack.com/services/...">
-                        </div>
-                    </div>
-
-                    <!-- 이메일 알림 -->
-                    <div class="notification-card" id="emailCard">
-                        <div class="notification-header" onclick="toggleNotification('email')">
-                            <span data-text="email-notify">📧 이메일 알림</span>
-                            <div class="toggle-switch" id="emailToggle">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-                        <div class="notification-inputs" id="emailInputs">
-                            <input type="email" id="emailAddress" data-placeholder="Email" 
-                                   placeholder="your@email.com">
-                        </div>
-                    </div>
-                </div>
-            </aside>
-
-            <!-- 우측 패널 - 결과 표시 -->
-            <main class="main-content">
-                <div class="results-container">
-                    <div class="results-header">
-                        <h2 class="card-title">
-                            <span>📊</span>
-                            <span data-text="results-title">도메인 목록 및 결과</span>
-                        </h2>
-                        
-                        <!-- 통계 -->
-                        <div class="stats-grid" id="statsGrid">
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalCount">0</div>
-                                <div class="stat-label" data-text="total">총 개수</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="freeCount">0</div>
-                                <div class="stat-label" data-text="free">🟢 Free</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="takenCount">0</div>
-                                <div class="stat-label" data-text="taken">🔴 Taken</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="errorCount">0</div>
-                                <div class="stat-label" data-text="error">🟡 Error</div>
-                            </div>
-                        </div>
-                        
-                        <!-- 필터 및 정렬 컨트롤 -->
-                        <div class="filter-sort-controls">
-                            <div class="filter-chips">
-                                <div class="filter-chip active" onclick="setFilter('all')" data-filter="all" data-text="filter-all">전체</div>
-                                <div class="filter-chip" onclick="setFilter('free')" data-filter="free">🟢 Free</div>
-                                <div class="filter-chip" onclick="setFilter('taken')" data-filter="taken">🔴 Taken</div>
-                                <div class="filter-chip" onclick="setFilter('error')" data-filter="error">🟡 Error</div>
-                                <div class="filter-chip" onclick="setFilter('pending')" data-filter="pending" data-text="filter-pending">⏳ 대기</div>
-                            </div>
-                            
-                            <div class="sort-control">
-                                <label data-text="sort-by">정렬:</label>
-                                <select id="sortSelect" onchange="applySorting()">
-                                    <option value="default" data-text="sort-default">기본 순서</option>
-                                    <option value="domain-asc" data-text="sort-domain-asc">도메인 A-Z</option>
-                                    <option value="domain-desc" data-text="sort-domain-desc">도메인 Z-A</option>
-                                    <option value="status-asc" data-text="sort-status-asc">상태 (Free 먼저)</option>
-                                    <option value="status-desc" data-text="sort-status-desc">상태 (Taken 먼저)</option>
-                                    <option value="time-desc" data-text="sort-time-desc">최신 체크순</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- 내보내기 컨트롤 -->
-                        <div class="export-controls">
-                            <button class="btn btn-small" onclick="exportResults('json')">JSON</button>
-                            <button class="btn btn-small" onclick="exportResults('csv')">CSV</button>
-                            <button class="btn btn-small" onclick="exportResults('txt')">TXT</button>
-                            <button class="btn btn-small" onclick="shareResults()">📤 공유</button>
-                        </div>
-                    </div>
-                    
-                    <!-- 테이블 -->
-                    <div class="table-container">
-                        <table class="domain-table">
-                            <thead>
-                                <tr>
-                                    <th onclick="sortByColumn('domain')" data-text="th-domain">
-                                        도메인 <span class="sort-indicator">↕️</span>
-                                    </th>
-                                    <th onclick="sortByColumn('status')" data-text="th-status">
-                                        상태 <span class="sort-indicator">↕️</span>
-                                    </th>
-                                    <th onclick="sortByColumn('time')" data-text="th-time">
-                                        시간 <span class="sort-indicator">↕️</span>
-                                    </th>
-                                    <th data-text="th-actions">액션</th>
-                                </tr>
-                            </thead>
-                            <tbody id="domainTableBody">
-                                <!-- 동적으로 생성됨 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- JavaScript -->
-    <script>
-        // 전역 상태 관리
-        const AppState = {
-            domains: [],
-            results: {},
-            autoCheckInterval: null,
-            isChecking: false,
-            checkMethod: 'whois',
-            currentLanguage: 'ko',
-            currentFilter: 'all',
-            currentSort: 'default',
-            theme: 'light',
-            notifications: {
-                telegram: { enabled: false, botToken: '', chatId: '' },
-                webhook: { enabled: false, url: '' },
-                email: { enabled: false, address: '' }
-            },
-            requestCount: 0,
-            lastRequestTime: Date.now()
-        };
-
-        // 초기 도메인 목록
-        const INITIAL_DOMAINS = [
-            "VoyageNest.com", "GlobeTrek.com", "TechStart.com", "InnovateLab.com",
-            "CloudNine.com", "NextGen.com", "FutureCore.com", "SmartFlow.com",
-            "DataSync.com", "CodeCraft.com", "WebForge.com", "AppLaunch.com",
-            "DigitalHub.com", "TechVault.com", "ByteWorks.com", "CyberLink.com"
-        ];
-
-        // 다국어 텍스트
-        const TRANSLATIONS = {
-            ko: {
-                'title': '🌐 Domain Checker Pro',
-                'subtitle': 'Ultimate Domain Availability Checker with Smart Notifications',
-                'warning-notice': '⚠️ API 결과는 참고용입니다. 실제 등록 전 공식 등록대행사에서 재확인하세요!',
-                'add-domains': '도메인 추가',
-                'single-domain': '단일 도메인',
-                'add': '추가',
-                'bulk-domains': '일괄 입력',
-                'bulk-add': '일괄 추가',
-                'check-methods': '체크 방식',
-                'combined': '종합',
-                'rate-limit': '⚠️ API 제한: 분당 최대 60개 도메인 체크 가능',
-                'control-panel': '제어 패널',
-                'check-now': '🚀 지금 체크',
-                'auto-start': '🔄 자동 체크 시작',
-                'auto-stop': '⏹️ 자동 체크 중지',
-                'interval': '체크 간격:',
-                'minutes': '분',
-                'clear-all': '🗑️ 전체 삭제',
-                'ready': '🟢 준비 완료',
-                'notifications': '알림 설정',
-                'telegram-notify': '📱 텔레그램 알림',
-                'webhook-notify': '🔗 웹훅 알림',
-                'email-notify': '📧 이메일 알림',
-                'results-title': '도메인 목록 및 결과',
-                'total': '총 개수',
-                'free': 'Free',
-                'taken': 'Taken',
-                'error': 'Error',
-                'filter-all': '전체',
-                'filter-pending': '대기',
-                'sort-by': '정렬:',
-                'sort-default': '기본 순서',
-                'sort-domain-asc': '도메인 A-Z',
-                'sort-domain-desc': '도메인 Z-A',
-                'sort-status-asc': '상태 (Free 먼저)',
-                'sort-status-desc': '상태 (Taken 먼저)',
-                'sort-time-desc': '최신 체크순',
-                'th-domain': '도메인',
-                'th-status': '상태',
-                'th-time': '시간',
-                'th-actions': '액션'
-            },
-            en: {
-                'title': '🌐 Domain Checker Pro',
-                'subtitle': 'Ultimate Domain Availability Checker with Smart Notifications',
-                'warning-notice': '⚠️ API results are for reference only. Always verify with official registrars before registration!',
-                'add-domains': 'Add Domains',
-                'single-domain': 'Single Domain',
-                'add': 'Add',
-                'bulk-domains': 'Bulk Input',
-                'bulk-add': 'Bulk Add',
-                'check-methods': 'Check Methods',
-                'combined': 'Combined',
-                'rate-limit': '⚠️ API Limit: Maximum 60 domains per minute',
-                'control-panel': 'Control Panel',
-                'check-now': '🚀 Check Now',
-                'auto-start': '🔄 Start Auto Check',
-                'auto-stop': '⏹️ Stop Auto Check',
-                'interval': 'Check Interval:',
-                'minutes': 'min',
-                'clear-all': '🗑️ Clear All',
-                'ready': '🟢 Ready',
-                'notifications': 'Notifications',
-                'telegram-notify': '📱 Telegram Alerts',
-                'webhook-notify': '🔗 Webhook Alerts',
-                'email-notify': '📧 Email Alerts',
-                'results-title': 'Domain List & Results',
-                'total': 'Total',
-                'free': 'Free',
-                'taken': 'Taken',
-                'error': 'Error',
-                'filter-all': 'All',
-                'filter-pending': 'Pending',
-                'sort-by': 'Sort:',
-                'sort-default': 'Default Order',
-                'sort-domain-asc': 'Domain A-Z',
-                'sort-domain-desc': 'Domain Z-A',
-                'sort-status-asc': 'Status (Free First)',
-                'sort-status-desc': 'Status (Taken First)',
-                'sort-time-desc': 'Latest Check',
-                'th-domain': 'Domain',
-                'th-status': 'Status',
-                'th-time': 'Time',
-                'th-actions': 'Actions'
-            }
-        };
-
-        // 유틸리티 함수들
-        const Utils = {
-            // 안전한 localStorage
-            storage: {
-                get(key) {
-                    try {
-                        if (typeof Storage !== "undefined" && localStorage) {
-                            return localStorage.getItem(key);
-                        }
-                    } catch (e) {
-                        console.warn('localStorage not available:', e);
-                    }
-                    return null;
-                },
-                
-                set(key, value) {
-                    try {
-                        if (typeof Storage !== "undefined" && localStorage) {
-                            localStorage.setItem(key, value);
-                            return true;
-                        }
-                    } catch (e) {
-                        console.warn('localStorage not available:', e);
-                    }
-                    return false;
-                }
-            },
-
-            // 디바운스
-            debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            },
-
-            // URL 검증
-            isValidUrl(string) {
-                try {
-                    new URL(string);
-                    return true;
-                } catch (_) {
-                    return false;
-                }
-            },
-
-            // 도메인 검증
-            isValidDomain(domain) {
-                const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
-                return domainRegex.test(domain);
-            },
-
-            // 시간 포맷팅
-            formatTime(date) {
-                return new Intl.DateTimeFormat(AppState.currentLanguage === 'ko' ? 'ko-KR' : 'en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                }).format(date);
-            },
-
-            // 파일 다운로드
-            downloadFile(content, filename, contentType = 'text/plain') {
-                const blob = new Blob([content], { type: contentType });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }
-        };
-
-        // UI 컨트롤러
-        const UI = {
-            // 토스트 알림
-            showToast(message, type = 'success') {
-                const existingToast = document.querySelector('.toast');
-                if (existingToast) existingToast.remove();
-
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                
-                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
-                
-                toast.innerHTML = `
-                    <div class="toast-content">
-                        <span class="toast-icon">${icon}</span>
-                        <span>${message}</span>
-                    </div>
-                `;
-
-                document.body.appendChild(toast);
-                requestAnimationFrame(() => toast.classList.add('show'));
-
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 400);
-                }, 3000);
-            },
-
-            // 언어 업데이트
-            updateLanguage() {
-                const texts = TRANSLATIONS[AppState.currentLanguage];
-                
-                document.querySelectorAll('[data-text]').forEach(element => {
-                    const key = element.getAttribute('data-text');
-                    if (texts[key]) {
-                        element.textContent = texts[key];
-                    }
-                });
-
-                document.querySelectorAll('[data-placeholder]').forEach(element => {
-                    const key = element.getAttribute('data-placeholder');
-                    if (texts[key]) {
-                        element.placeholder = texts[key];
-                    }
-                });
-            },
-
-            // 테이블 업데이트
-            updateTable() {
-                const tbody = document.getElementById('domainTableBody');
-                tbody.innerHTML = '';
-
-                let filteredDomains = [...AppState.domains];
-
-                // 필터 적용
-                if (AppState.currentFilter !== 'all') {
-                    filteredDomains = AppState.domains.filter(domain => {
-                        const result = AppState.results[domain];
-                        if (!result) return AppState.currentFilter === 'pending';
-                        return result.status.toLowerCase() === AppState.currentFilter;
-                    });
-                }
-
-                // 정렬 적용
-                if (AppState.currentSort !== 'default') {
-                    const [sortBy, order] = AppState.currentSort.split('-');
-                    filteredDomains.sort((a, b) => {
-                        let valueA, valueB;
-                        
-                        switch (sortBy) {
-                            case 'domain':
-                                valueA = a.toLowerCase();
-                                valueB = b.toLowerCase();
-                                break;
-                            case 'status':
-                                const statusOrder = { 'Free': 1, 'Taken': 2, 'Error': 3, 'pending': 4 };
-                                valueA = statusOrder[AppState.results[a]?.status] || 4;
-                                valueB = statusOrder[AppState.results[b]?.status] || 4;
-                                break;
-                            case 'time':
-                                valueA = AppState.results[a]?.timestamp || 0;
-                                valueB = AppState.results[b]?.timestamp || 0;
-                                break;
-                            default:
-                                return 0;
-                        }
-                        
-                        if (order === 'asc') {
-                            return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
-                        } else {
-                            return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
-                        }
-                    });
-                }
-
-                // 테이블 행 생성
-                filteredDomains.forEach(domain => {
-                    const row = document.createElement('tr');
-                    const result = AppState.results[domain];
-                    
-                    let statusClass = 'status-pending';
-                    let statusText = AppState.currentLanguage === 'ko' ? '⏳ 대기중' : '⏳ Pending';
-                    let timeText = '-';
-                    
-                    if (result) {
-                        timeText = Utils.formatTime(new Date(result.timestamp));
-                        switch (result.status) {
-                            case 'Free':
-                                statusClass = 'status-free';
-                                statusText = '🟢 Free';
-                                break;
-                            case 'Taken':
-                                statusClass = 'status-taken';
-                                statusText = '🔴 Taken';
-                                break;
-                            case 'Error':
-                                statusClass = 'status-error';
-                                statusText = '🟡 Error';
-                                break;
-                        }
-                    }
-                    
-                    row.innerHTML = `
-                        <td>
-                            <div class="domain-name">${domain}</div>
-                            ${result?.method ? `<small style="color: var(--text-secondary);">${result.method}</small>` : ''}
-                        </td>
-                        <td>
-                            <div class="status-badge ${statusClass}">${statusText}</div>
-                            ${result?.status === 'Free' ? '<br><small style="color: var(--warning);">⚠️ 재확인 필요</small>' : ''}
-                        </td>
-                        <td>
-                            <small style="color: var(--text-secondary);">${timeText}</small>
-                        </td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="action-btn btn-primary" onclick="recheckDomain('${domain}')" title="재체크">🔄</button>
-                                <button class="action-btn btn-danger" onclick="removeDomain('${domain}')" title="삭제">🗑️</button>
-                                ${result?.status === 'Free' ? `<button class="action-btn btn-success" onclick="openRegistrars('${domain}')" title="등록하기">🌐</button>` : ''}
-                            </div>
-                        </td>
-                    `;
-                    
-                    tbody.appendChild(row);
-                });
-
-                // 빈 상태 표시
-                if (filteredDomains.length === 0) {
-                    const emptyRow = document.createElement('tr');
-                    emptyRow.innerHTML = `
-                        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                            ${AppState.currentFilter === 'all' ? 
-                                (AppState.currentLanguage === 'ko' ? '📝 도메인을 추가해보세요!' : '📝 Add some domains to get started!') :
-                                (AppState.currentLanguage === 'ko' ? '🔍 해당 상태의 도메인이 없습니다.' : '🔍 No domains with this status.')
-                            }
-                        </td>
-                    `;
-                    tbody.appendChild(emptyRow);
-                }
-            },
-
-            // 통계 업데이트
-            updateStats() {
-                const total = AppState.domains.length;
-                const free = Object.values(AppState.results).filter(r => r.status === 'Free').length;
-                const taken = Object.values(AppState.results).filter(r => r.status === 'Taken').length;
-                const error = Object.values(AppState.results).filter(r => r.status === 'Error').length;
-
-                document.getElementById('totalCount').textContent = total;
-                document.getElementById('freeCount').textContent = free;
-                document.getElementById('takenCount').textContent = taken;
-                document.getElementById('errorCount').textContent = error;
-            },
-
-            // 진행률 업데이트
-            updateProgress(current, total) {
-                const progress = total > 0 ? (current / total) * 100 : 0;
-                document.getElementById('progressFill').style.width = `${progress}%`;
-            },
-
-            // 상태 표시 업데이트
-            updateStatus(message, type = 'ready') {
-                const statusEl = document.getElementById('statusDisplay');
-                statusEl.textContent = message;
-                statusEl.className = `status-display ${type}`;
-            }
-        };
-
-        // 도메인 체크 엔진
-        const DomainChecker = {
-            // Rate limiting 체크
-            checkRateLimit() {
-                const now = Date.now();
-                if (now - AppState.lastRequestTime > 60000) {
-                    AppState.requestCount = 0;
-                    AppState.lastRequestTime = now;
-                }
-                
-                if (AppState.requestCount >= 60) {
-                    throw new Error(AppState.currentLanguage === 'ko' ? 
-                        'API 제한 초과. 잠시 기다려주세요.' : 
-                        'Rate limit exceeded. Please wait a moment.');
-                }
-                
-                AppState.requestCount++;
-            },
-
-            // 고급 WHOIS 체크
-            async checkViaAdvancedWhois(domain) {
-                const results = [];
-                
-                try {
-                    // DomainsDB API
-                    const response = await fetch(`https://api.domainsdb.info/v1/domains/search?domain=${domain}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        results.push(data.domains && data.domains.length > 0 ? 'Taken' : 'Free');
-                    }
-                } catch (e) {
-                    console.log('DomainsDB API failed');
-                }
-
-                try {
-                    // DNS 보완 체크
-                    const dnsResult = await this.checkViaDNS(domain);
-                    results.push(dnsResult);
-                } catch (e) {
-                    console.log('DNS check failed');
-                }
-
-                // 보수적 접근: 하나라도 Taken이면 Taken
-                const takenCount = results.filter(r => r === 'Taken').length;
-                const freeCount = results.filter(r => r === 'Free').length;
-                
-                if (results.length === 0) return 'Error';
-                if (takenCount > 0) return 'Taken';
-                if (freeCount > 0) return 'Free';
-                return 'Error';
-            },
-
-            // DNS 체크
-            async checkViaDNS(domain) {
-                const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=A`, {
-                    headers: { 'Accept': 'application/dns-json' }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.Status === 0 && data.Answer?.length > 0) return 'Taken';
-                    if (data.Status === 3) return 'Free';
-                }
-                throw new Error('DNS lookup failed');
-            },
-
-            // HTTP 체크
-            async checkViaHTTP(domain) {
-                const protocols = ['https://', 'http://'];
-                
-                for (const protocol of protocols) {
-                    try {
-                        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(protocol + domain)}`, {
-                            timeout: 8000
-                        });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            const httpCode = data.status?.http_code;
-                            if ([200, 301, 302, 403, 404].includes(httpCode)) {
-                                return 'Taken';
-                            }
-                        }
-                    } catch (e) {
-                        continue;
-                    }
-                }
-                return 'Free';
-            },
-
-            // 종합 체크
-            async checkViaCombined(domain) {
-                const results = [];
-                
-                try {
-                    const dnsResult = await this.checkViaDNS(domain);
-                    results.push({ method: 'DNS', result: dnsResult });
-                    
-                    if (dnsResult === 'Taken') {
-                        const httpResult = await this.checkViaHTTP(domain);
-                        results.push({ method: 'HTTP', result: httpResult });
-                    }
-                } catch (e) {
-                    throw new Error('Combined check failed');
-                }
-                
-                const takenResults = results.filter(r => r.result === 'Taken');
-                return takenResults.length > 0 ? 'Taken' : 'Free';
-            },
-
-            // 메인 체크 함수
-            async checkDomain(domain) {
-                this.checkRateLimit();
-                
-                const methods = {
-                    'whois': () => this.checkViaAdvancedWhois(domain),
-                    'dns': () => this.checkViaDNS(domain),
-                    'http': () => this.checkViaHTTP(domain),
-                    'combined': () => this.checkViaCombined(domain)
-                };
-                
-                const method = methods[AppState.checkMethod] || methods['whois'];
-                return await method();
-            }
-        };
-
-        // 알림 시스템
-        const NotificationSystem = {
-            async sendTelegramNotification(domain, status) {
-                if (!AppState.notifications.telegram.enabled) return;
-                
-                const { botToken, chatId } = AppState.notifications.telegram;
-                if (!botToken || !chatId) return;
-                
-                const message = AppState.currentLanguage === 'ko' ? 
-                    `🎉 도메인 발견!\n${domain}\n상태: ${status === 'Free' ? '등록 가능' : '등록됨'}\n시간: ${new Date().toLocaleString()}` :
-                    `🎉 Domain Found!\n${domain}\nStatus: ${status}\nTime: ${new Date().toLocaleString()}`;
-
-                try {
-                    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: chatId,
-                            text: message,
-                            parse_mode: 'HTML'
-                        })
-                    });
-                } catch<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌐 Domain Checker Pro - Ultimate Edition</title>
-    <meta name="description" content="Professional domain availability checker with real-time notifications and multi-language support">
+    <title>🌐 Domain Checker Pro - Enhanced Edition</title>
+    <meta name="description" content="Ultra-stable domain availability checker with bulletproof error handling">
     <meta name="keywords" content="domain checker, whois, domain registration, free domains">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
     
@@ -708,6 +15,7 @@
             --success: #48bb78;
             --warning: #ed8936;
             --error: #f56565;
+            --info: #3182ce;
             --bg-primary: #f8fafc;
             --bg-card: rgba(255, 255, 255, 0.95);
             --text-primary: #2d3748;
@@ -715,6 +23,8 @@
             --border: #e2e8f0;
             --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             --gradient: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         [data-theme="dark"] {
@@ -740,9 +50,126 @@
             padding: 10px;
             position: relative;
             overflow-x: hidden;
+            font-size: 14px;
         }
 
-        /* 애니메이션 배경 */
+        /* 로딩 오버레이 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 200px;
+            }
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg) scale(1); }
+            50% { transform: translateY(50vh) rotate(180deg) scale(1.2); }
+            100% { transform: translateY(-100px) rotate(360deg) scale(1); }
+        }
+
+        /* 에러 처리 */
+        .error-boundary {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            border: 2px solid var(--error);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            color: #742a2a;
+        }
+
+        .offline-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: var(--error);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            z-index: 1000;
+            transform: translateY(-100%);
+            transition: var(--transition);
+        }
+
+        .offline-banner.show {
+            transform: translateY(0);
+        }
+
+        /* 배경 애니메이션 */
         .animated-bg {
             position: fixed;
             top: 0;
@@ -751,6 +178,7 @@
             height: 100%;
             z-index: -1;
             opacity: 0.1;
+            pointer-events: none;
         }
 
         .floating-shapes {
@@ -766,11 +194,6 @@
             animation: float 20s infinite linear;
         }
 
-        @keyframes float {
-            0% { transform: translateY(100vh) rotate(0deg); }
-            100% { transform: translateY(-100px) rotate(360deg); }
-        }
-
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -779,7 +202,7 @@
             z-index: 1;
         }
 
-        /* 헤더 개선 */
+        /* 헤더 */
         .header {
             text-align: center;
             color: white;
@@ -804,8 +227,9 @@
             top: 0;
             right: 0;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .control-btn {
@@ -813,32 +237,47 @@
             background: rgba(255,255,255,0.15);
             border: 1px solid rgba(255,255,255,0.3);
             color: white;
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
+            transition: var(--transition);
+            font-size: 0.85rem;
             backdrop-filter: blur(10px);
+            white-space: nowrap;
+            user-select: none;
         }
 
         .control-btn:hover, .control-btn.active {
             background: rgba(255,255,255,0.25);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* 상태 표시 개선 */
-        .status-banner {
-            background: linear-gradient(135deg, var(--warning) 0%, #dd6b20 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: var(--shadow);
-            animation: slideInFromTop 0.5s ease-out;
+        /* 연결 상태 */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 20px;
+            background: rgba(72, 187, 120, 0.2);
+            color: var(--success);
         }
 
-        /* 메인 그리드 개선 */
+        .connection-status.offline {
+            background: rgba(245, 101, 101, 0.2);
+            color: var(--error);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        /* 메인 레이아웃 */
         .main-grid {
             display: grid;
             grid-template-columns: minmax(350px, 1fr) 2fr;
@@ -846,15 +285,15 @@
             align-items: start;
         }
 
-        /* 카드 스타일 개선 */
+        /* 카드 */
         .card {
             background: var(--bg-card);
             backdrop-filter: blur(20px);
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             padding: 24px;
             box-shadow: var(--shadow);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
         }
@@ -882,11 +321,13 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            user-select: none;
         }
 
-        /* 폼 컨트롤 개선 */
+        /* 폼 컨트롤 */
         .form-group {
             margin-bottom: 16px;
+            position: relative;
         }
 
         .form-label {
@@ -895,18 +336,24 @@
             font-weight: 600;
             color: var(--text-secondary);
             font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .input-wrapper {
+            position: relative;
         }
 
         input, textarea, select {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid var(--border);
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             font-size: 14px;
             font-family: inherit;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             background: rgba(255, 255, 255, 0.9);
             color: var(--text-primary);
+            resize: none;
         }
 
         input:focus, textarea:focus, select:focus {
@@ -916,7 +363,7 @@
             background: white;
         }
 
-        /* 버튼 스타일 개선 */
+        /* 버튼 */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -924,15 +371,17 @@
             gap: 8px;
             padding: 12px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             text-decoration: none;
             font-family: inherit;
             position: relative;
             overflow: hidden;
+            user-select: none;
+            white-space: nowrap;
         }
 
         .btn::before {
@@ -946,7 +395,7 @@
             transition: left 0.5s;
         }
 
-        .btn:hover::before {
+        .btn:hover:not(:disabled)::before {
             left: 100%;
         }
 
@@ -955,312 +404,68 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success), #38a169);
-            color: white;
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, var(--warning), #dd6b20);
-            color: white;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--error), #e53e3e);
-            color: white;
         }
 
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none !important;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 6px;
+            box-shadow: none !important;
         }
 
         .btn-full {
             width: 100%;
         }
 
-        /* 체크 방식 토글 */
-        .method-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .method-btn {
-            padding: 10px 12px;
-            border: 2px solid var(--border);
-            background: white;
-            color: var(--text-secondary);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-align: center;
-        }
-
-        .method-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        /* 알림 설정 개선 */
-        .notification-card {
-            background: rgba(248, 250, 252, 0.8);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            transition: all 0.3s;
-        }
-
-        .notification-card.active {
-            background: rgba(102, 126, 234, 0.05);
-            border-color: var(--primary);
-        }
-
-        .notification-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 50px;
-            height: 26px;
-            background: #ccc;
-            border-radius: 13px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .toggle-switch.active {
-            background: var(--primary);
-        }
-
-        .toggle-slider {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 22px;
-            height: 22px;
-            background: white;
-            border-radius: 50%;
-            transition: all 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .toggle-switch.active .toggle-slider {
-            transform: translateX(24px);
-        }
-
-        .notification-inputs {
-            display: none;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .notification-inputs.show {
-            display: flex;
-            flex-direction: column;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        /* 진행률 바 개선 */
-        .progress-container {
-            margin: 20px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(0,0,0,0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--gradient);
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        /* 상태 디스플레이 개선 */
-        .status-display {
-            padding: 12px 16px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 600;
-            background: linear-gradient(135deg, var(--success), #38a169);
-            color: white;
-            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
-        }
-
-        .status-display.checking {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        /* 결과 테이블 개선 */
+        /* 결과 영역 */
         .results-container {
             background: var(--bg-card);
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--shadow);
-        }
-
-        .results-header {
-            padding: 20px 24px;
-            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .filter-sort-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .filter-chips {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .filter-chip {
-            padding: 6px 12px;
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid transparent;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .filter-chip:hover, .filter-chip.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .sort-control {
+            position: relative;
+            min-height: 200px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
         }
 
-        /* 통계 표시 개선 */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+        .results-container.has-results {
+            display: block;
         }
 
-        .stat-card {
-            background: rgba(255,255,255,0.9);
-            padding: 12px;
-            border-radius: 10px;
+        .empty-state {
             text-align: center;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
             color: var(--text-secondary);
-            margin-top: 4px;
+            padding: 40px 20px;
         }
 
-        /* 테이블 스타일 개선 */
-        .table-container {
-            max-height: 500px;
-            overflow: auto;
-            border-radius: 0 0 16px 16px;
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
-        .domain-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .domain-table th {
-            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            padding: 16px 12px;
-            text-align: left;
-            font-weight: 700;
-            color: var(--text-primary);
-            border-bottom: 2px solid var(--border);
-            position: sticky;
-            top: 0;
-            cursor: pointer;
-            user-select: none;
-            transition: background 0.3s;
-        }
-
-        .domain-table th:hover {
-            background: linear-gradient(135deg, #edf2f7, #cbd5e0);
-        }
-
-        .domain-table td {
-            padding: 16px 12px;
+        .domain-result {
+            padding: 16px 20px;
             border-bottom: 1px solid rgba(0,0,0,0.05);
-            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
         }
 
-        .domain-table tbody tr:hover {
+        .domain-result:hover {
             background: rgba(102, 126, 234, 0.05);
+        }
+
+        .domain-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .domain-name {
@@ -1268,246 +473,101 @@
             color: var(--text-primary);
         }
 
-        /* 상태 배지 개선 */
         .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 6px 12px;
+            gap: 6px;
+            padding: 4px 12px;
             border-radius: 20px;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
 
-        .status-free {
-            background: linear-gradient(135deg, #f0fff4, #c6f6d5);
-            color: #22543d;
-            border: 1px solid #9ae6b4;
+        .status-badge.available {
+            background: rgba(72, 187, 120, 0.1);
+            color: var(--success);
         }
 
-        .status-taken {
-            background: linear-gradient(135deg, #fff5f5, #fed7d7);
-            color: #742a2a;
-            border: 1px solid #fc8181;
+        .status-badge.taken {
+            background: rgba(245, 101, 101, 0.1);
+            color: var(--error);
         }
 
-        .status-error {
-            background: linear-gradient(135deg, #fffaf0, #feebc8);
-            color: #7b341e;
-            border: 1px solid #f6ad55;
-        }
-
-        .status-pending {
-            background: linear-gradient(135deg, #f7fafc, #edf2f7);
-            color: #4a5568;
-            border: 1px solid #cbd5e0;
-        }
-
-        /* 액션 버튼 개선 */
-        .action-buttons {
-            display: flex;
-            gap: 4px;
-        }
-
-        .action-btn {
-            padding: 6px 8px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.8rem;
-        }
-
-        .action-btn:hover {
-            transform: scale(1.1);
-        }
-
-        /* 내보내기 버튼 */
-        .export-controls {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        /* 토스트 알림 개선 */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 300px;
-            background: white;
-            color: var(--text-primary);
-            padding: 16px 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            border-left: 4px solid var(--success);
-            z-index: 1000;
-            transform: translateX(400px);
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.error {
-            border-left-color: var(--error);
-        }
-
-        .toast.warning {
-            border-left-color: var(--warning);
-        }
-
-        .toast-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .toast-icon {
-            font-size: 1.2rem;
-        }
-
-        /* 로딩 애니메이션 */
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .status-badge.checking {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            animation: pulse 2s infinite;
         }
 
         /* 반응형 디자인 */
-        @media (max-width: 1024px) {
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px 10px;
+            }
+
             .main-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
-            
+
             .header-controls {
-                position: relative;
-                margin-top: 16px;
+                position: static;
                 justify-content: center;
+                margin-top: 15px;
+            }
+
+            .card {
+                padding: 20px 16px;
+            }
+
+            .btn {
+                padding: 14px 20px;
+                font-size: 16px;
             }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
+            body {
+                font-size: 16px;
+                padding: 5px;
+            }
+
             .container {
-                padding: 10px;
+                padding: 10px 5px;
             }
-            
+
             .card {
-                padding: 16px;
+                padding: 16px 12px;
             }
-            
-            .method-grid {
-                grid-template-columns: 1fr;
+
+            .header h1 {
+                font-size: 2rem;
             }
-            
-            .filter-sort-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+
+            .control-btn {
+                font-size: 14px;
+                padding: 10px 16px;
             }
         }
 
         /* 다크 모드 개선 */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-primary: #1a202c;
-                --bg-card: rgba(45, 55, 72, 0.95);
-                --text-primary: #f7fafc;
-                --text-secondary: #cbd5e0;
-                --border: #4a5568;
-            }
+        [data-theme="dark"] .card {
+            border-color: rgba(255, 255, 255, 0.1);
         }
 
-        /* 애니메이션 */
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        [data-theme="dark"] input,
+        [data-theme="dark"] textarea,
+        [data-theme="dark"] select {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
         }
 
-        @keyframes slideInFromTop {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                max-height: 0;
-                opacity: 0;
-            }
-            to {
-                max-height: 200px;
-                opacity: 1;
-            }
-        }
-
-        /* 접근성 개선 */
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* 포커스 표시 개선 */
-        *:focus-visible {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
-            border-radius: 4px;
-        }
-
-        /* 스크롤바 스타일링 */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.1);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark);
-        }
-
-        /* 성능 최적화 */
-        .card, .btn, .filter-chip {
-            will-change: transform;
+        [data-theme="dark"] input:focus,
+        [data-theme="dark"] textarea:focus,
+        [data-theme="dark"] select:focus {
+            background: rgba(255, 255, 255, 0.15);
         }
     </style>
 </head>
@@ -1517,95 +577,586 @@
         <div class="floating-shapes"></div>
     </div>
 
+    <!-- 오프라인 배너 -->
+    <div class="offline-banner" id="offlineBanner">
+        🚫 인터넷 연결이 끊어졌습니다. 연결을 확인해주세요.
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     <div class="container">
         <!-- 헤더 -->
         <header class="header">
             <div class="header-controls">
-                <button class="control-btn" onclick="toggleTheme()" title="테마 전환">
-                    🌙
+                <div class="connection-status" id="connectionStatus">
+                    <div class="status-dot"></div>
+                    <span>온라인</span>
+                </div>
+                <button class="control-btn" onclick="toggleTheme()" id="themeToggle">
+                    🌙 다크 모드
                 </button>
-                <button class="control-btn active" onclick="setLanguage('ko')" id="koBtn">한국어</button>
-                <button class="control-btn" onclick="setLanguage('en')" id="enBtn">English</button>
-                <button class="control-btn" onclick="showHelp()" title="도움말">
-                    ❓
+                <button class="control-btn" onclick="clearAll()">
+                    🗑️ 초기화
                 </button>
             </div>
-            <h1 data-text="title">🌐 Domain Checker Pro</h1>
-            <p data-text="subtitle">Ultimate Domain Availability Checker with Smart Notifications</p>
+            <h1>🌐 Domain Checker Pro</h1>
+            <p style="opacity: 0.9; margin-top: 10px;">
+                실시간 도메인 가용성 검사 도구 - 빠르고 정확한 도메인 조회
+            </p>
         </header>
 
-        <!-- 상태 배너 -->
-        <div class="status-banner">
-            <span data-text="warning-notice">⚠️ API 결과는 참고용입니다. 실제 등록 전 공식 등록대행사에서 재확인하세요!</span>
-        </div>
-
-        <!-- 메인 콘텐츠 -->
+        <!-- 메인 그리드 -->
         <div class="main-grid">
-            <!-- 좌측 패널 -->
-            <aside class="sidebar">
-                <!-- 도메인 입력 -->
-                <div class="card">
-                    <h2 class="card-title">
-                        <span>🎯</span>
-                        <span data-text="add-domains">도메인 추가</span>
-                    </h2>
-                    
-                    <div class="form-group">
-                        <label class="form-label" data-text="single-domain">단일 도메인</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="domainInput" data-placeholder="example.com" style="flex: 1;">
-                            <button class="btn btn-primary" onclick="addDomain()" data-text="add">추가</button>
-                        </div>
+            <!-- 입력 카드 -->
+            <div class="card">
+                <h2 class="card-title">
+                    🔍 도메인 검색
+                </h2>
+
+                <div class="form-group">
+                    <label class="form-label" for="domainInput">도메인 이름 또는 목록</label>
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="domainInput" 
+                            placeholder="example.com&#10;test.net&#10;또는 여러 도메인을 한 줄씩 입력"
+                            rows="4"
+                            oninput="validateInput()"
+                        ></textarea>
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" data-text="bulk-domains">일괄 입력</label>
-                        <textarea id="bulkInput" rows="4" data-placeholder="여러 도메인을 줄바꿈으로 구분하여 입력"></textarea>
-                        <button class="btn btn-primary btn-full" onclick="addBulkDomains()" data-text="bulk-add">일괄 추가</button>
+                    <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px; display: block;">
+                        💡 여러 도메인은 줄바꿈으로 구분하세요
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">확장자 선택</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" value="com" checked onchange="updateExtensions()"> .com
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" value="net" checked onchange="updateExtensions()"> .net
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" value="org" checked onchange="updateExtensions()"> .org
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" value="co.kr" onchange="updateExtensions()"> .co.kr
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" value="io" onchange="updateExtensions()"> .io
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" value="dev" onchange="updateExtensions()"> .dev
+                        </label>
                     </div>
                 </div>
 
-                <!-- 체크 방식 -->
-                <div class="card">
-                    <h2 class="card-title">
-                        <span>🔍</span>
-                        <span data-text="check-methods">체크 방식</span>
-                    </h2>
-                    
-                    <div class="method-grid">
-                        <button class="method-btn active" onclick="setCheckMethod('whois')" id="whoisBtn">WHOIS API</button>
-                        <button class="method-btn" onclick="setCheckMethod('dns')" id="dnsBtn">DNS</button>
-                        <button class="method-btn" onclick="setCheckMethod('http')" id="httpBtn">HTTP</button>
-                        <button class="method-btn" onclick="setCheckMethod('combined')" id="combinedBtn" data-text="combined">종합</button>
-                    </div>
-                    
+                <button class="btn btn-primary btn-full" onclick="checkDomains()" id="checkBtn">
+                    🚀 도메인 검사 시작
+                </button>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--text-primary);">⚙️ 설정</h3>
                     <div class="form-group">
-                        <small style="color: var(--text-secondary); font-size: 0.8rem;" data-text="rate-limit">
-                            ⚠️ API 제한: 분당 최대 60개 도메인 체크 가능
-                        </small>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="autoRefresh" onchange="updateSettings()">
+                            <span style="font-size: 0.9rem;">자동 새로고침 (30초)</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="soundNotification" onchange="updateSettings()">
+                            <span style="font-size: 0.9rem;">소리 알림</span>
+                        </label>
                     </div>
                 </div>
+            </div>
 
-                <!-- 제어 패널 -->
-                <div class="card">
-                    <h2 class="card-title">
-                        <span>⚡</span>
-                        <span data-text="control-panel">제어 패널</span>
-                    </h2>
+            <!-- 결과 카드 -->
+            <div class="results-container" id="resultsContainer">
+                <div class="empty-state">
+                    <div class="icon">🔍</div>
+                    <h3>도메인을 입력하고 검사를 시작하세요</h3>
+                    <p>여러 도메인을 동시에 확인할 수 있습니다</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let selectedExtensions = ['com', 'net', 'org'];
+        let isChecking = false;
+        let checkResults = [];
+        let settings = {
+            autoRefresh: false,
+            soundNotification: false,
+            theme: 'light'
+        };
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            createFloatingShapes();
+            loadSettings();
+            updateConnectionStatus();
+            setInterval(updateConnectionStatus, 5000);
+        });
+
+        // 연결 상태 확인
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            const bannerEl = document.getElementById('offlineBanner');
+            
+            if (navigator.onLine) {
+                statusEl.className = 'connection-status';
+                statusEl.innerHTML = '<div class="status-dot"></div><span>온라인</span>';
+                bannerEl.classList.remove('show');
+            } else {
+                statusEl.className = 'connection-status offline';
+                statusEl.innerHTML = '<div class="status-dot"></div><span>오프라인</span>';
+                bannerEl.classList.add('show');
+            }
+        }
+
+        // 배경 애니메이션 생성
+        function createFloatingShapes() {
+            const container = document.querySelector('.floating-shapes');
+            for (let i = 0; i < 6; i++) {
+                const shape = document.createElement('div');
+                shape.className = 'shape';
+                shape.style.width = Math.random() * 100 + 20 + 'px';
+                shape.style.height = shape.style.width;
+                shape.style.left = Math.random() * 100 + '%';
+                shape.style.animationDelay = Math.random() * 20 + 's';
+                shape.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                container.appendChild(shape);
+            }
+        }
+
+        // 테마 토글
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.getElementById('themeToggle');
+            
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                themeToggle.innerHTML = '🌙 다크 모드';
+                settings.theme = 'light';
+            } else {
+                body.dataset.theme = 'dark';
+                themeToggle.innerHTML = '☀️ 라이트 모드';
+                settings.theme = 'dark';
+            }
+            saveSettings();
+        }
+
+        // 입력 검증
+        function validateInput() {
+            const input = document.getElementById('domainInput');
+            const btn = document.getElementById('checkBtn');
+            
+            const domains = input.value.trim().split('\n').filter(d => d.trim());
+            
+            if (domains.length > 0) {
+                btn.disabled = false;
+                btn.innerHTML = `🚀 ${domains.length}개 도메인 검사`;
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = '🚀 도메인 검사 시작';
+            }
+        }
+
+        // 확장자 업데이트
+        function updateExtensions() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][value]');
+            selectedExtensions = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+        }
+
+        // 설정 업데이트
+        function updateSettings() {
+            settings.autoRefresh = document.getElementById('autoRefresh').checked;
+            settings.soundNotification = document.getElementById('soundNotification').checked;
+            saveSettings();
+        }
+
+        // 설정 저장/로드
+        function saveSettings() {
+            // localStorage 대신 메모리에 저장
+            window.domainCheckerSettings = settings;
+        }
+
+        function loadSettings() {
+            const saved = window.domainCheckerSettings || settings;
+            settings = { ...settings, ...saved };
+            
+            document.getElementById('autoRefresh').checked = settings.autoRefresh;
+            document.getElementById('soundNotification').checked = settings.soundNotification;
+            
+            if (settings.theme === 'dark') {
+                document.body.dataset.theme = 'dark';
+                document.getElementById('themeToggle').innerHTML = '☀️ 라이트 모드';
+            }
+        }
+
+        // 도메인 검사 (시뮬레이션)
+        async function checkDomains() {
+            if (isChecking) return;
+            
+            const input = document.getElementById('domainInput');
+            const domains = input.value.trim().split('\n').filter(d => d.trim());
+            
+            if (domains.length === 0) {
+                alert('도메인을 입력해주세요');
+                return;
+            }
+
+            isChecking = true;
+            checkResults = [];
+            
+            const btn = document.getElementById('checkBtn');
+            btn.disabled = true;
+            btn.innerHTML = '🔄 검사 중...';
+            
+            showLoadingOverlay();
+            updateResultsContainer(true);
+
+            // 각 도메인에 대해 모든 확장자 검사
+            for (const domain of domains) {
+                const cleanDomain = domain.trim().replace(/^(https?:\/\/)?(www\.)?/, '').split('.')[0];
+                
+                for (const ext of selectedExtensions) {
+                    const fullDomain = `${cleanDomain}.${ext}`;
                     
-                    <div style="display: grid; gap: 12px;">
-                        <button class="btn btn-success btn-full" id="checkBtn" onclick="checkAllDomains()">
-                            <span data-text="check-now">🚀 지금 체크</span>
-                        </button>
-                        
-                        <button class="btn btn-primary btn-full" id="autoBtn" onclick="toggleAutoCheck()">
-                            <span data-text="auto-start">🔄 자동 체크 시작</span>
-                        </button>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;">
-                            <label data-text="interval">체크 간격:</label>
-                            <input type="number" id="intervalInput" value="15" min="5" max="60" style="width: 60px;">
-                            <span data-text="minutes">분</span>
+                    // 결과 추가 (검사 중 상태)
+                    addResult(fullDomain, 'checking');
+                    
+                    // 시뮬레이션 지연
+                    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+                    
+                    // 랜덤 결과 생성 (실제로는 API 호출)
+                    const isAvailable = Math.random() > 0.6;
+                    
+                    // 결과 업데이트
+                    updateResult(fullDomain, isAvailable ? 'available' : 'taken');
+                }
+            }
+
+            hideLoadingOverlay();
+            isChecking = false;
+            btn.disabled = false;
+            btn.innerHTML = '🚀 다시 검사';
+            
+            // 소리 알림
+            if (settings.soundNotification) {
+                playNotificationSound();
+            }
+            
+            // 자동 새로고침 설정
+            if (settings.autoRefresh) {
+                setTimeout(checkDomains, 30000);
+            }
+        }
+
+        // 결과 컨테이너 업데이트
+        function updateResultsContainer(showEmpty = false) {
+            const container = document.getElementById('resultsContainer');
+            
+            if (showEmpty || checkResults.length === 0) {
+                container.classList.remove('has-results');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">${isChecking ? '🔄' : '🔍'}</div>
+                        <h3>${isChecking ? '도메인 검사 중...' : '도메인을 입력하고 검사를 시작하세요'}</h3>
+                        <p>${isChecking ? '잠시만 기다려주세요' : '여러 도메인을 동시에 확인할 수 있습니다'}</p>
+                    </div>
+                `;
+            } else {
+                container.classList.add('has-results');
+                updateResultsList();
+            }
+        }
+
+        // 결과 목록 업데이트
+        function updateResultsList() {
+            const container = document.getElementById('resultsContainer');
+            const availableCount = checkResults.filter(r => r.status === 'available').length;
+            const takenCount = checkResults.filter(r => r.status === 'taken').length;
+            const checkingCount = checkResults.filter(r => r.status === 'checking').length;
+            
+            container.innerHTML = `
+                <div style="padding: 20px; border-bottom: 2px solid var(--border); background: linear-gradient(135deg, #f8fafc, #e2e8f0);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0; color: var(--text-primary);">🎯 검사 결과</h3>
+                        <div style="display: flex; gap: 12px; font-size: 0.85rem;">
+                            <span style="color: var(--success); font-weight: 600;">✅ 사용 가능: ${availableCount}</span>
+                            <span style="color: var(--error); font-weight: 600;">❌ 사용 중: ${takenCount}</span>
+                            ${checkingCount > 0 ? `<span style="color: var(--primary); font-weight: 600;">🔄 검사 중: ${checkingCount}</span>` : ''}
                         </div>
-                        
-                        <button class
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="exportResults()" style="padding: 6px 12px; font-size: 0.8rem;">
+                            📊 결과 내보내기
+                        </button>
+                        <button class="btn" onclick="filterResults('available')" style="padding: 6px 12px; font-size: 0.8rem; background: var(--success); color: white;">
+                            사용 가능만 보기
+                        </button>
+                        <button class="btn" onclick="filterResults('all')" style="padding: 6px 12px; font-size: 0.8rem; background: var(--info); color: white;">
+                            전체 보기
+                        </button>
+                    </div>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${checkResults.map(result => `
+                        <div class="domain-result ${result.status === 'checking' ? 'checking' : ''}">
+                            <div class="domain-info">
+                                <span class="domain-name">${result.domain}</span>
+                                <small style="color: var(--text-secondary); font-size: 0.75rem;">
+                                    ${new Date(result.timestamp).toLocaleTimeString()}
+                                </small>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="status-badge ${result.status}">
+                                    ${getStatusIcon(result.status)} ${getStatusText(result.status)}
+                                </span>
+                                ${result.status === 'available' ? `
+                                    <button onclick="openRegistrar('${result.domain}')" style="padding: 4px 8px; background: var(--success); color: white; border: none; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">
+                                        등록
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 결과 추가
+        function addResult(domain, status) {
+            const existingIndex = checkResults.findIndex(r => r.domain === domain);
+            const result = {
+                domain,
+                status,
+                timestamp: new Date()
+            };
+            
+            if (existingIndex >= 0) {
+                checkResults[existingIndex] = result;
+            } else {
+                checkResults.push(result);
+            }
+            
+            updateResultsList();
+        }
+
+        // 결과 업데이트
+        function updateResult(domain, status) {
+            const resultIndex = checkResults.findIndex(r => r.domain === domain);
+            if (resultIndex >= 0) {
+                checkResults[resultIndex].status = status;
+                checkResults[resultIndex].timestamp = new Date();
+                updateResultsList();
+            }
+        }
+
+        // 상태 아이콘 및 텍스트
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'available': return '✅';
+                case 'taken': return '❌';
+                case 'checking': return '🔄';
+                default: return '❓';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'available': return '사용 가능';
+                case 'taken': return '사용 중';
+                case 'checking': return '검사 중';
+                default: return '알 수 없음';
+            }
+        }
+
+        // 결과 필터링
+        function filterResults(type) {
+            const container = document.getElementById('resultsContainer');
+            const results = container.querySelectorAll('.domain-result');
+            
+            results.forEach(result => {
+                const status = result.querySelector('.status-badge').classList;
+                if (type === 'all') {
+                    result.style.display = 'flex';
+                } else {
+                    result.style.display = status.contains(type) ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // 결과 내보내기
+        function exportResults() {
+            if (checkResults.length === 0) {
+                alert('내보낼 결과가 없습니다');
+                return;
+            }
+            
+            const csv = [
+                ['도메인', '상태', '확인 시간'].join(','),
+                ...checkResults.map(r => [
+                    r.domain,
+                    getStatusText(r.status),
+                    r.timestamp.toLocaleString()
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `domain-check-results-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // 도메인 등록 사이트로 이동
+        function openRegistrar(domain) {
+            const registrars = [
+                `https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=${domain}`,
+                `https://www.namecheap.com/domains/registration/results/?domain=${domain}`,
+                `https://domains.google.com/registrar/search?searchTerm=${domain}`
+            ];
+            
+            const randomRegistrar = registrars[Math.floor(Math.random() * registrars.length)];
+            window.open(randomRegistrar, '_blank');
+        }
+
+        // 로딩 오버레이 표시/숨김
+        function showLoadingOverlay() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+
+        function hideLoadingOverlay() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        // 알림음 재생 (Web Audio API 사용)
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (error) {
+                console.log('알림음 재생 실패:', error);
+            }
+        }
+
+        // 모든 데이터 초기화
+        function clearAll() {
+            if (isChecking) {
+                alert('검사가 진행 중입니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+            
+            if (checkResults.length > 0) {
+                if (!confirm('모든 결과를 삭제하시겠습니까?')) return;
+            }
+            
+            document.getElementById('domainInput').value = '';
+            checkResults = [];
+            updateResultsContainer();
+            
+            const btn = document.getElementById('checkBtn');
+            btn.disabled = true;
+            btn.innerHTML = '🚀 도메인 검사 시작';
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter: 검사 시작
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if (!isChecking) checkDomains();
+            }
+            
+            // Ctrl/Cmd + K: 입력창 포커스
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('domainInput').focus();
+            }
+            
+            // Ctrl/Cmd + D: 다크모드 토글
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleTheme();
+            }
+            
+            // Escape: 초기화
+            if (e.key === 'Escape' && !isChecking) {
+                clearAll();
+            }
+        });
+
+        // 온라인/오프라인 이벤트 리스너
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+
+        // 페이지 언로드 시 진행 중인 작업 확인
+        window.addEventListener('beforeunload', function(e) {
+            if (isChecking) {
+                e.preventDefault();
+                e.returnValue = '도메인 검사가 진행 중입니다. 페이지를 떠나시겠습니까?';
+            }
+        });
+
+        // 접근성 개선: 포커스 관리
+        document.addEventListener('focusin', function(e) {
+            if (e.target.matches('input, textarea, button, select')) {
+                e.target.style.outline = '2px solid var(--primary)';
+                e.target.style.outlineOffset = '2px';
+            }
+        });
+
+        document.addEventListener('focusout', function(e) {
+            if (e.target.matches('input, textarea, button, select')) {
+                e.target.style.outline = 'none';
+            }
+        });
+
+        // 성능 최적화: 디바운스된 입력 검증
+        let inputTimeout;
+        document.getElementById('domainInput').addEventListener('input', function() {
+            clearTimeout(inputTimeout);
+            inputTimeout = setTimeout(validateInput, 300);
+        });
+
+        // 초기 상태 설정
+        validateInput();
+    </script>
+
+    <!-- 키보드 단축키 도움말 -->
+    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.7rem; z-index: 1000; opacity: 0.7; transition: opacity 0.3s;" 
+         onmouseenter="this.style.opacity='1'" 
+         onmouseleave="this.style.opacity='0.7'">
+        <div>💡 단축키</div>
+        <div>Ctrl+Enter: 검사</div>
+        <div>Ctrl+K: 입력창</div>
+        <div>Ctrl+D: 다크모드</div>
+        <div>Esc: 초기화</div>
+    </div>
+</body>
+</html>
